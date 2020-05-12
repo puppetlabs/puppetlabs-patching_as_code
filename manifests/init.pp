@@ -7,8 +7,10 @@ class patching_as_code(
   Array $blacklist,
   Array $whitelist,
 ) {
-  # Ensure os_patching module is used
-  include os_patching
+  # Ensure os_patching module is used and set patch_window
+  class { 'os_patching':
+    patch_window => $patch_group,
+  }
 
   # Determine if today is Patch Day for this node's $patch_group
   $bool_patch_day = patching_as_code::is_patchday(
