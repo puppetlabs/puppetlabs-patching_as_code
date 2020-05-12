@@ -13,10 +13,32 @@ class patching_as_code(
   }
 
   # Determine if today is Patch Day for this node's $patch_group
-  $bool_patch_day = patching_as_code::is_patchday(
-    $patch_schedule[$patch_group]['day_of_week'],
-    $patch_schedule[$patch_group]['count_of_week']
-  )
+  case $patch_group {
+    'always': {
+      $bool_patch_day = true
+      schedule { 'Patching as Code - Patch Window':
+        range  => '00:00 - 23:59',
+        repeat => 1440
+      }
+    }
+    'never': {
+      $bool_patch_day = false
+      schedule { 'Patching as Code - Patch Window':
+        period => 'never',
+      }
+    }
+    default: {
+      $bool_patch_day = patching_as_code::is_patchday(
+        $patch_schedule[$patch_group]['day_of_week'],
+        $patch_schedule[$patch_group]['count_of_week']
+      )
+      schedule { 'Patching as Code - Patch Window':
+        range   => $patch_schedule[$patch_group]['hours'],
+        weekday => $patch_schedule[$patch_group]['day_of_week'],
+        repeat  => $patch_schedule[$patch_group]['max_runs']
+      }
+    }
+  }
 
   if $bool_patch_day {
     if $facts['os_patching'] {
@@ -37,27 +59,6 @@ class patching_as_code(
       default: {
         $whitelisted_updates = $available_updates.filter |$item| { $item in $whitelist }
         $updates_to_install = $whitelisted_updates.filter |$item| { !($item in $blacklist) }
-      }
-    }
-
-    case $patch_group {
-      'always': {
-        schedule { 'Patching as Code - Patch Window':
-          range  => '00:00 - 23:59',
-          repeat => 1440
-        }
-      }
-      'never': {
-        schedule { 'Patching as Code - Patch Window':
-          period => 'never',
-        }
-      }
-      default: {
-        schedule { 'Patching as Code - Patch Window':
-          range   => $patch_schedule[$patch_group]['hours'],
-          weekday => $patch_schedule[$patch_group]['day_of_week'],
-          repeat  => $patch_schedule[$patch_group]['max_runs']
-        }
       }
     }
 
