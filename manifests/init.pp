@@ -2,11 +2,17 @@
 # Framework for patch mgmt as code.
 #
 class patching_as_code(
-  Enum['always', 'testing', 'early', 'primary', 'secondary', 'late', 'never'] $patch_group,
+  String $patch_group,
   Hash $patch_schedule,
   Array $blacklist,
   Array $whitelist,
 ) {
+  # Verify the $patch_group value points to a valid patch schedule
+  unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
+    fail("Patch group ${patch_group} is not valid as no associated schedule was found!
+    Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+  }
+
   # Ensure os_patching module is used and set patch_window
   class { 'os_patching':
     patch_window => $patch_group,
