@@ -2,10 +2,11 @@
 # Performs the actual patching on Linux
 #
 class patching_as_code::linux::patchday (
-  Array $updates
+  Array $updates,
+  String $patch_fact
 ) {
   if $updates.size > 0 {
-    if $facts['os_patching']['reboots']['reboot_required'] == true {
+    if $facts[$patch_fact]['reboots']['reboot_required'] == true {
       Package {
         require => Reboot['Patching as Code - Patch Reboot']
       }

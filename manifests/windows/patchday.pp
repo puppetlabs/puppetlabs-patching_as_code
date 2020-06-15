@@ -2,10 +2,11 @@
 # Performs the actual patching on Windows
 #
 class patching_as_code::windows::patchday (
-  Array $updates
+  Array $updates,
+  String $patch_fact
 ) {
   if $updates.size > 0 {
-    if $facts['os_patching']['reboots']['reboot_required'] == true {
+    if $facts[$patch_fact]['reboots']['reboot_required'] == true {
       Windows_updates::Kb {
         require => Reboot['Patching as Code - Patch Reboot']
       }

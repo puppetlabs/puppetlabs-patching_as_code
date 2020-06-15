@@ -2,10 +2,11 @@
 # Framework for patch mgmt as code.
 #
 class patching_as_code(
-  String $patch_group,
-  Hash $patch_schedule,
-  Array $blacklist,
-  Array $whitelist,
+  String            $patch_group,
+  Hash              $patch_schedule,
+  Array             $blacklist,
+  Array             $whitelist,
+  Optional[Boolean] $use_pe_patch = true, # Use the pe_patch module if available (PE 2019.8+)
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -13,9 +14,24 @@ class patching_as_code(
     Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
   }
 
-  # Ensure os_patching module is used and set patch_window
-  class { 'os_patching':
-    patch_window => $patch_group,
+  # Determine which patching module to use
+  if defined('pe_patch') and $use_pe_patch {
+    $pe_patch = true
+  } else {
+    $pe_patch = false
+  }
+
+  # Ensure the correct patching module is used and set patch_window/patch_group
+  if $pe_patch {
+    $patch_fact = 'pe_patch'
+    class { 'pe_patch':
+      patch_group => $patch_group,
+    }
+  } else {
+    $patch_fact = 'os_patching'
+    class { 'os_patching':
+      patch_window => $patch_group,
+    }
   }
 
   # Determine if today is Patch Day for this node's $patch_group
@@ -47,10 +63,10 @@ class patching_as_code(
   }
 
   if $bool_patch_day {
-    if $facts['os_patching'] {
+    if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
-        'windows' => $facts['os_patching']['missing_update_kbs'],
-        'Linux'   => $facts['os_patching']['package_updates'],
+        'windows' => $facts[$patch_fact]['missing_update_kbs'],
+        'Linux'   => $facts[$patch_fact]['package_updates'],
         default   => []
       }
     }
@@ -71,12 +87,14 @@ class patching_as_code(
     case $facts['kernel'] {
       'windows': {
         class { 'patching_as_code::windows::patchday':
-          updates => $updates_to_install
+          updates    => $updates_to_install,
+          patch_fact => $patch_fact
         }
       }
       'Linux': {
         class { 'patching_as_code::linux::patchday':
-          updates => $updates_to_install
+          updates    => $updates_to_install,
+          patch_fact => $patch_fact
         }
       }
       default: {
