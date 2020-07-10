@@ -6,26 +6,31 @@ patching_as_code::patch_schedule:
     count_of_week: 2
     hours: 07:00 - 09:00
     max_runs: 4
+    reboot: always
   early:
     day_of_week: Monday
     count_of_week: 3
     hours: 20:00 - 22:00
     max_runs: 4
+    reboot: always
   primary:
     day_of_week: Friday
     count_of_week: 3
     hours: 22:00 - 00:00
     max_runs: 4
+    reboot: always
   secondary:
     day_of_week: Saturday
     count_of_week: 3
     hours: 22:00 - 00:00
     max_runs: 4
+    reboot: always
   late:
     day_of_week: Saturday
     count_of_week: 4
     hours: 22:00 - 00:00
     max_runs: 4
+    reboot: always
 
 patching_as_code::blacklist: []
 patching_as_code::whitelist: []

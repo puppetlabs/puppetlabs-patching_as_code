@@ -3,10 +3,22 @@
 #
 class patching_as_code::windows::patchday (
   Array $updates,
-  String $patch_fact
+  String $patch_fact,
+  Enum['always', 'never', 'ifneeded'] $reboot
 ) {
+
+  $_reboot = if $reboot == 'always' {
+              true
+            }
+            elsif $reboot == 'never' {
+              false
+            }
+            else {
+              $facts[$patch_fact]['reboots']['reboot_required']
+            }
+
   if $updates.size > 0 {
-    if $facts[$patch_fact]['reboots']['reboot_required'] == true {
+    if $facts[$patch_fact]['reboots']['reboot_required'] == true and $_reboot {
       Windows_updates::Kb {
         require => Reboot['Patching as Code - Patch Reboot']
       }
@@ -14,15 +26,17 @@ class patching_as_code::windows::patchday (
         schedule => 'Patching as Code - Patch Window',
         notify   => Reboot['Patching as Code - Patch Reboot']
       }
-    } else {
+    } elsif $_reboot {
       Windows_updates::Kb {
         notify => Reboot['Patching as Code - Patch Reboot']
       }
     }
 
-    reboot { 'Patching as Code - Patch Reboot':
-      apply    => 'finished',
-      schedule => 'Patching as Code - Patch Window'
+    if $_reboot {
+      reboot { 'Patching as Code - Patch Reboot':
+        apply    => 'finished',
+        schedule => 'Patching as Code - Patch Window'
+      }
     }
 
     $updates.each | $kb | {

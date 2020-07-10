@@ -42,12 +42,14 @@ class patching_as_code(
         range  => '00:00 - 23:59',
         repeat => 1440
       }
+      $reboot = 'always'
     }
     'never': {
       $bool_patch_day = false
       schedule { 'Patching as Code - Patch Window':
         period => 'never',
       }
+      $reboot = 'never'
     }
     default: {
       $bool_patch_day = patching_as_code::is_patchday(
@@ -59,6 +61,7 @@ class patching_as_code(
         weekday => $patch_schedule[$patch_group]['day_of_week'],
         repeat  => $patch_schedule[$patch_group]['max_runs']
       }
+      $reboot = $patch_schedule[$patch_group]['reboot']
     }
   }
 
@@ -88,13 +91,15 @@ class patching_as_code(
       'windows': {
         class { 'patching_as_code::windows::patchday':
           updates    => $updates_to_install,
-          patch_fact => $patch_fact
+          patch_fact => $patch_fact,
+          reboot     => $reboot
         }
       }
       'Linux': {
         class { 'patching_as_code::linux::patchday':
           updates    => $updates_to_install,
-          patch_fact => $patch_fact
+          patch_fact => $patch_fact,
+          reboot     => $reboot
         }
       }
       default: {

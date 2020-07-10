@@ -3,10 +3,22 @@
 #
 class patching_as_code::linux::patchday (
   Array $updates,
-  String $patch_fact
+  String $patch_fact,
+  Enum['always', 'never', 'ifneeded'] $reboot
 ) {
+
+  $_reboot = if $reboot == 'always' {
+              true
+            }
+            elsif $reboot == 'never' {
+              false
+            }
+            else {
+              $facts[$patch_fact]['reboots']['reboot_required']
+            }
+
   if $updates.size > 0 {
-    if $facts[$patch_fact]['reboots']['reboot_required'] == true {
+    if $facts[$patch_fact]['reboots']['reboot_required'] == true and $_reboot {
       Package {
         require => Reboot['Patching as Code - Patch Reboot']
       }
@@ -14,28 +26,34 @@ class patching_as_code::linux::patchday (
         schedule => 'Patching as Code - Patch Window',
         notify   => Reboot['Patching as Code - Patch Reboot']
       }
-    } else {
+    } elsif $_reboot {
       Package {
         notify => Reboot['Patching as Code - Patch Reboot']
       }
     }
 
-    reboot { 'Patching as Code - Patch Reboot':
-      apply    => 'finished',
-      schedule => 'Patching as Code - Patch Window'
+    if $_reboot {
+      reboot { 'Patching as Code - Patch Reboot':
+        apply    => 'finished',
+        schedule => 'Patching as Code - Patch Window'
+      }
     }
 
-    exec { 'Clean Yum before updates':
-      command  => 'yum clean all',
-      path     => '/usr/bin',
-      schedule => 'Patching as Code - Patch Window'
+    if $facts['package_provider'] == 'yum' {
+      Package {
+        require  => Exec['Patching as Code - Clean Yum'],
+      }
+      exec { 'Patching as Code - Clean Yum':
+        command  => 'yum clean all',
+        path     => '/usr/bin',
+        schedule => 'Patching as Code - Patch Window'
+      }
     }
 
     $updates.each | $package | {
       package { $package:
         ensure   => 'latest',
-        schedule => 'Patching as Code - Patch Window',
-        require  => Exec['Clean Yum before updates'],
+        schedule => 'Patching as Code - Patch Window'
       }
     }
 

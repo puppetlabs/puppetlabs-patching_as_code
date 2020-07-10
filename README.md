@@ -26,13 +26,14 @@ This module will leverage the fact data provided by either the [albatrossflavour
 Once available patches are known via the above facts, the module will install the patches during the configured patch window.
 * For Linux operating systems, this happens through the native Package resource.
 * For Windows operating systems, this happens through the `windows_updates::kb` class, which requires the [noma4i/windows_updates](https://forge.puppet.com/noma4i/windows_updates) module to be installed.
-* A reboot is always performed at the end of a patch run that actually installed patches.
+* By default, a reboot is performed at the end of a patch run that actually installed patches. You can change this behavior though.
 
 ### Setup Requirements
 
 To start with patching_as_code, complete the following prerequirements:
 * Ensure this module and its dependencies are added to your control repo's Puppetfile
-* If you are **not** running on Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile
+* If you are **not** running Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile
+* If you **are** running Puppet Enterprise 2019.8.0 or higher, the built-in `pe_patch` module will be used by default. You can however force the use of the `os_patching` module if so desired, by setting the optional `patching_as_code::use_pe_patch` parameter to `false`
 * For Linux operating systems, ensure your package managers are pointing to repositories that are publishing new package versions as needed
 * For Windows operating systems, ensure Windows Update is configured to check with a valid update server (either WSUS, Windows Update or Microsoft Update). If you want, you can use the [puppetlabs/wsus_client](https://forge.puppet.com/puppetlabs/wsus_client) module to manage the Windows Update configuration.
 
@@ -44,29 +45,29 @@ include patching_as_code
 ```
 
 This enables automatic detection of available patches, and put all the nodes in the `primary` patch group.
-By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00).
+By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
 
 ## Usage
 
 To control which patch group a node belongs to, you need to set `patch_group` parameter of the class.
-It is highly recommended to use Hiera to set the correct value for each node:
+It is highly recommended to use Hiera to set the correct value for each node, for example:
 ```
 patching_as_code::patch_group: early
 ```
 
 The module provides 5 patch groups out of the box:
 ```
-testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00
-early:     patches every 3rd Monday   of the month, between 20:00 and 22:00
-primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00
-secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00
-late:      patches every 4th Saturday of the month, between 22:00 and 00:00
+testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot
+early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, performs a reboot
+primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot
+secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot
+late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot
 ```
 
 There are also 2 special built-in patch groups:
 ```
-always:    patches immediately when a patch is available, can patch in any agent run
-never:     never performs any patching
+always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot
+never:     never performs any patching and does not reboot
 ```
 
 ### Customizing the patch groups
@@ -81,12 +82,13 @@ patching_as_code::patch_schedule:
     count_of_week: <the Nth time day_of_week occurs in the month>
     hours:         <start of patch window> - <end of patch window>
     max_runs:      <max number of times that Puppet can perform patching within the patch window>
+    reboot:        always | never | ifneeded
 ```
 
 For example, say you want to have the following 2 patch groups:
 ```
-group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time
-group2: patches every 3nd Monday of the month, between 20:00 and 22:00, max 3 times
+group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time, reboots if needed
+group2: patches every 3nd Monday of the month, between 20:00 and 22:00, max 3 times, does not reboot
 ```
 then define the hash as follows:
 ```
@@ -96,11 +98,13 @@ patching_as_code::patch_schedule:
     count_of_week: 2
     hours: 10:00 - 11:00
     max_runs: 1
+    reboot: ifneeded
   group2:
     day_of_week: Monday
     count_of_week: 3
     hours: 20:00 - 22:00
     max_runs: 3
+    reboot: never
 ```
 
 ## Controlling which patches get installed
