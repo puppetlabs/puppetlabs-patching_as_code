@@ -1,10 +1,11 @@
 {
   "name": "puppetlabs-patching_as_code",
   "version": "0.1.0",
-  "author": "kevinreeuwijk",
-  "summary": "Framework for patch management as code",
+  "author": "Kevin Reeuwijk",
+  "summary": "Automated patching through desired state code",
   "license": "Apache-2.0",
-  "source": "https://github.com/puppetlabs/puppetlabs-patching_as_code",
+  "source": "https://forge.puppet.com/puppetlabs/patching_as_code",
+  "project_page": "https://github.com/puppetlabs/puppetlabs-patching_as_code",
   "dependencies": [
     {
       "name": "noma4i/windows_updates",
