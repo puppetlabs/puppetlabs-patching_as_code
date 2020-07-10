@@ -1,87 +1,128 @@
-# patching_as_code
-
-Welcome to your new module. A short overview of the generated parts can be found in the PDK documentation at https://puppet.com/pdk/latest/pdk_generating_modules.html .
-
-The README template below provides a starting point with details about what information to include in your README.
+# puppetlabs-patching_as_code
 
 #### Table of Contents
 
-1. [Description](#description)
-2. [Setup - The basics of getting started with patching_as_code](#setup)
-    * [What patching_as_code affects](#what-patching_as_code-affects)
-    * [Setup requirements](#setup-requirements)
-    * [Beginning with patching_as_code](#beginning-with-patching_as_code)
-3. [Usage - Configuration options and additional functionality](#usage)
-4. [Limitations - OS compatibility, etc.](#limitations)
-5. [Development - Guide for contributing to the module](#development)
+- [puppetlabs-patching_as_code](#puppetlabs-patching_as_code)
+      - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Setup](#setup)
+    - [What this module affects](#what-this-module-affects)
+    - [Setup Requirements](#setup-requirements)
+    - [Beginning with patching_as_code](#beginning-with-patching_as_code)
+  - [Usage](#usage)
+    - [Customizing the patch groups](#customizing-the-patch-groups)
+  - [Controlling which patches get installed](#controlling-which-patches-get-installed)
+  - [Limitations](#limitations)
 
 ## Description
 
-Briefly tell users why they might want to use your module. Explain what your module does and what kind of problems users can solve with it.
-
-This should be a fairly short description helps the user decide if your module is what they want.
+This module provides automatic patch management for Linux and Windows through desired state code.
 
 ## Setup
 
-### What patching_as_code affects **OPTIONAL**
+### What this module affects
 
-If it's obvious what your module touches, you can skip this section. For example, folks can probably figure out that your mysql_instance module affects their MySQL instances.
+This module will leverage the fact data provided by either the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) or PE 2019.8's builtin `pe_patch` module.
+Once available patches are known via the above facts, the module will install the patches during the configured patch window.
+* For Linux operating systems, this happens through the native Package resource.
+* For Windows operating systems, this happens through the `windows_updates::kb` class, which requires the [noma4i/windows_updates](https://forge.puppet.com/noma4i/windows_updates) module to be installed.
+* A reboot is always performed at the end of a patch run that actually installed patches.
 
-If there's more that they should know about, though, this is the place to mention:
+### Setup Requirements
 
-* Files, packages, services, or operations that the module will alter, impact, or execute.
-* Dependencies that your module automatically installs.
-* Warnings or other important notices.
-
-### Setup Requirements **OPTIONAL**
-
-If your module requires anything extra before setting up (pluginsync enabled, another module, etc.), mention it here.
-
-If your most recent release breaks compatibility or requires particular steps for upgrading, you might want to include an additional "Upgrading" section here.
+To start with patching_as_code, complete the following prerequirements:
+* Ensure this module and its dependencies are added to your control repo's Puppetfile
+* If you are **not** running on Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile
+* For Linux operating systems, ensure your package managers are pointing to repositories that are publishing new package versions as needed
+* For Windows operating systems, ensure Windows Update is configured to check with a valid update server (either WSUS, Windows Update or Microsoft Update). If you want, you can use the [puppetlabs/wsus_client](https://forge.puppet.com/puppetlabs/wsus_client) module to manage the Windows Update configuration.
 
 ### Beginning with patching_as_code
 
-The very basic steps needed for a user to get the module up and running. This can include setup steps, if necessary, or it can be an example of the most basic use of the module.
+To get started with the patching_as_code module, include it in your manifest:
+```
+include patching_as_code
+```
+
+This enables automatic detection of available patches, and put all the nodes in the `primary` patch group.
+By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00).
 
 ## Usage
 
-Include usage examples for common use cases in the **Usage** section. Show your users how to use your module to solve problems, and be sure to include code examples. Include three to five examples of the most important or common tasks a user can accomplish with your module. Show users how to accomplish more complex tasks that involve different types, classes, and functions working in tandem.
-
-## Reference
-
-This section is deprecated. Instead, add reference information to your code as Puppet Strings comments, and then use Strings to generate a REFERENCE.md in your module. For details on how to add code comments and generate documentation with Strings, see the Puppet Strings [documentation](https://puppet.com/docs/puppet/latest/puppet_strings.html) and [style guide](https://puppet.com/docs/puppet/latest/puppet_strings_style.html)
-
-If you aren't ready to use Strings yet, manually create a REFERENCE.md in the root of your module directory and list out each of your module's classes, defined types, facts, functions, Puppet tasks, task plans, and resource types and providers, along with the parameters for each.
-
-For each element (class, defined type, function, and so on), list:
-
-  * The data type, if applicable.
-  * A description of what the element does.
-  * Valid values, if the data type doesn't make it obvious.
-  * Default value, if any.
-
-For example:
-
+To control which patch group a node belongs to, you need to set `patch_group` parameter of the class.
+It is highly recommended to use Hiera to set the correct value for each node:
 ```
-### `pet::cat`
-
-#### Parameters
-
-##### `meow`
-
-Enables vocalization in your cat. Valid options: 'string'.
-
-Default: 'medium-loud'.
+patching_as_code::patch_group: early
 ```
+
+The module provides 5 patch groups out of the box:
+```
+testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00
+early:     patches every 3rd Monday   of the month, between 20:00 and 22:00
+primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00
+secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00
+late:      patches every 4th Saturday of the month, between 22:00 and 00:00
+```
+
+There are also 2 special built-in patch groups:
+```
+always:    patches immediately when a patch is available, can patch in any agent run
+never:     never performs any patching
+```
+
+### Customizing the patch groups
+
+You can customize the patch groups to whatever you need. To do so, simply copy the `patching_as_code::patch_schedule` hash from the `data/common.yaml` in this module, and paste it into your own Hiera store (recommended to place it in your Hiera's own `common.yaml`). This Hiera value will now override the defaults that the module provides. Customize the hash to your needs.
+
+The hash has the following structure:
+```
+patching_as_code::patch_schedule:
+  <name of patch group>:
+    day_of_week:   <day to patch systems>
+    count_of_week: <the Nth time day_of_week occurs in the month>
+    hours:         <start of patch window> - <end of patch window>
+    max_runs:      <max number of times that Puppet can perform patching within the patch window>
+```
+
+For example, say you want to have the following 2 patch groups:
+```
+group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time
+group2: patches every 3nd Monday of the month, between 20:00 and 22:00, max 3 times
+```
+then define the hash as follows:
+```
+patching_as_code::patch_schedule:
+  group1:
+    day_of_week: Sunday
+    count_of_week: 2
+    hours: 10:00 - 11:00
+    max_runs: 1
+  group2:
+    day_of_week: Monday
+    count_of_week: 3
+    hours: 20:00 - 22:00
+    max_runs: 3
+```
+
+## Controlling which patches get installed
+
+If you need to limit which patches can get installed, use the blacklist/whitelist capabilties. This is best done through Hiera.
+
+To prevent KB2881685 from getting installed:
+```
+patching_as_code::blacklist:
+  - KB2881685
+```
+
+To only allow the installation of a specific set of 3 KB articles:
+```
+patching_as_code::whitelist:
+  - KB123456
+  - KB234567
+  - KB345678
+```
+
+Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the whitelist, and then gets further reduced by any blacklisted updates.
 
 ## Limitations
 
-In the Limitations section, list any incompatibilities, known issues, or other warnings.
-
-## Development
-
-In the Development section, tell other users the ground rules for contributing to your project and how they should submit their work.
-
-## Release Notes/Contributors/Etc. **Optional**
-
-If you aren't using changelog, put your release notes here (though you should consider using changelog). You can also add any additional sections you feel are necessary or important to include here. Please use the `## ` header.
+This solution will patching to initiate whenever an agent run occurs inside the patch window. On Windows, patch runs for Cumulative Updates can take a long time, so you may want to tune the hours of your patch windows to account for a patch run getting started near the end of the window and still taking a significant amount of time.
