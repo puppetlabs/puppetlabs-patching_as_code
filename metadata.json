@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "source": "https://forge.puppet.com/puppetlabs/patching_as_code",
   "project_page": "https://github.com/puppetlabs/puppetlabs-patching_as_code",
+  "issues_url": "https://github.com/puppetlabs/puppetlabs-patching_as_code/issues",
   "dependencies": [
     {
       "name": "noma4i/windows_updates",
