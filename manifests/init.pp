@@ -6,9 +6,9 @@ class patching_as_code(
   Hash              $patch_schedule,
   Array             $blacklist,
   Array             $whitelist,
-  Array             $pre_patch_commands,
-  Array             $post_patch_commands,
-  Array             $pre_reboot_commands,
+  Hash              $pre_patch_commands,
+  Hash              $post_patch_commands,
+  Hash              $pre_reboot_commands,
   Optional[Boolean] $use_pe_patch = true, # Use the pe_patch module if available (PE 2019.8+)
 ) {
   # Verify the $patch_group value points to a valid patch schedule
