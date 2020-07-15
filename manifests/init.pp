@@ -6,6 +6,9 @@ class patching_as_code(
   Hash              $patch_schedule,
   Array             $blacklist,
   Array             $whitelist,
+  Array             $pre_patch_commands,
+  Array             $post_patch_commands,
+  Array             $pre_reboot_commands,
   Optional[Boolean] $use_pe_patch = true, # Use the pe_patch module if available (PE 2019.8+)
 ) {
   # Verify the $patch_group value points to a valid patch schedule
@@ -42,14 +45,14 @@ class patching_as_code(
         range  => '00:00 - 23:59',
         repeat => 1440
       }
-      $reboot = 'always'
+      $_reboot = 'always'
     }
     'never': {
       $bool_patch_day = false
       schedule { 'Patching as Code - Patch Window':
         period => 'never',
       }
-      $reboot = 'never'
+      $_reboot = 'never'
     }
     default: {
       $bool_patch_day = patching_as_code::is_patchday(
@@ -61,7 +64,7 @@ class patching_as_code(
         weekday => $patch_schedule[$patch_group]['day_of_week'],
         repeat  => $patch_schedule[$patch_group]['max_runs']
       }
-      $reboot = $patch_schedule[$patch_group]['reboot']
+      $_reboot = $patch_schedule[$patch_group]['reboot']
     }
   }
 
@@ -87,23 +90,57 @@ class patching_as_code(
       }
     }
 
-    case $facts['kernel'] {
-      'windows': {
-        class { 'patching_as_code::windows::patchday':
-          updates    => $updates_to_install,
-          patch_fact => $patch_fact,
-          reboot     => $reboot
+    $reboot = case $_reboot {
+      'always':   {true}
+      'never':    {false}
+      'ifneeded': {$facts[$patch_fact]['reboots']['reboot_required']}
+      default:    {false}
+    }
+
+    if $available_updates.count > 0 {
+      case $facts['kernel'].downcase() {
+        /(windows|linux)/: {
+          # Run pre-patch commands if provided
+          $pre_patch_commands.each | $cmd, $cmd_opts | {
+            exec { "Patching as Code - Before patching - ${cmd}":
+              *      => $cmd_opts,
+              before => Class["patching_as_code::${0}::patchday"]
+            }
+          }
+          # Perform main patching run
+          class { "patching_as_code::${0}::patchday":
+            updates    => $updates_to_install,
+            patch_fact => $patch_fact,
+            reboot     => $reboot
+          }
+          if $reboot == true {
+            $post_patch_commands.each | $cmd, $cmd_opts | {
+              exec { "Patching as Code - After patching - ${cmd}":
+                *       => $cmd_opts,
+                require => Class["patching_as_code::${0}::patchday"],
+                before  => Reboot['Patching as Code - Patch Reboot'],
+              } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+            }
+            $pre_reboot_commands.each | $cmd, $cmd_opts | {
+              exec { "Patching as Code - Before reboot - ${cmd}":
+                *       => $cmd_opts,
+                require => Class["patching_as_code::${0}::patchday"],
+                before  => Reboot['Patching as Code - Patch Reboot'],
+                tag     => ['patching_as_code_pre_reboot']
+              }
+            }
+          } else {
+            $post_patch_commands.each | $cmd, $cmd_opts | {
+              exec { "Patching as Code - After patching - ${cmd}":
+                *       => $cmd_opts,
+                require => Class["patching_as_code::${0}::patchday"]
+              }
+            }
+          }
         }
-      }
-      'Linux': {
-        class { 'patching_as_code::linux::patchday':
-          updates    => $updates_to_install,
-          patch_fact => $patch_fact,
-          reboot     => $reboot
+        default: {
+          fail('Unsupported operating system!')
         }
-      }
-      default: {
-        fail('Unsupported operating system!')
       }
     }
   }

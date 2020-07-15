@@ -34,4 +34,6 @@ patching_as_code::patch_schedule:
 
 patching_as_code::blacklist: []
 patching_as_code::whitelist: []
-
+pre_patch_commands: {}
+post_patch_commands: {}
+pre_reboot_commands: {}
