@@ -93,12 +93,12 @@ class patching_as_code(
     $reboot = case $_reboot {
       'always':   {true}
       'never':    {false}
-      'ifneeded': {$facts[$patch_fact]['reboots']['reboot_required']}
+      'ifneeded': {$facts[$patch_fact]['reboots']['reboot_required'] ? {true => true, default => false}}
       default:    {false}
     }
 
     if $available_updates.count > 0 {
-      if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot == true {
+      if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
         # Pending reboot present, prevent patching and reboot immediately
         reboot { 'Patching as Code - Patch Reboot':
           apply    => 'immediately',
@@ -125,7 +125,7 @@ class patching_as_code(
               patch_fact => $patch_fact,
               reboot     => $reboot
             }
-            if $reboot == true {
+            if $reboot {
               # Reboot after patching
               $post_patch_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - After patching - ${cmd}":
