@@ -4,42 +4,11 @@
 class patching_as_code::linux::patchday (
   Array $updates,
   String $patch_fact,
-  Enum['always', 'never', 'ifneeded'] $reboot
+  Boolean $reboot
 ) {
 
-  $_reboot = if $reboot == 'always' {
-              true
-            }
-            elsif $reboot == 'never' {
-              false
-            }
-            else {
-              $facts[$patch_fact]['reboots']['reboot_required']
-            }
-
-  if $updates.size > 0 {
-    if $facts[$patch_fact]['reboots']['reboot_required'] == true and $_reboot {
-      Package {
-        require => Reboot['Patching as Code - Patch Reboot']
-      }
-      notify { 'Found pending reboot, performing reboot before patching...':
-        schedule => 'Patching as Code - Patch Window',
-        notify   => Reboot['Patching as Code - Patch Reboot']
-      }
-    } elsif $_reboot {
-      Package {
-        notify => Reboot['Patching as Code - Patch Reboot']
-      }
-    }
-
-    if $_reboot {
-      reboot { 'Patching as Code - Patch Reboot':
-        apply    => 'finished',
-        schedule => 'Patching as Code - Patch Window'
-      }
-    }
-
-    if $facts['package_provider'] == 'yum' {
+  case $facts['package_provider'] {
+    'yum': {
       Package {
         require  => Exec['Patching as Code - Clean Yum'],
       }
@@ -49,14 +18,22 @@ class patching_as_code::linux::patchday (
         schedule => 'Patching as Code - Patch Window'
       }
     }
+    default: { }
+  }
 
-    $updates.each | $package | {
+  $updates.each | $package | {
+    if $reboot {
+      package { $package:
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        notify   => Reboot['Patching as Code - Patch Reboot']
+      }
+    } else {
       package { $package:
         ensure   => 'latest',
         schedule => 'Patching as Code - Patch Window'
       }
     }
-
   }
 
 }
