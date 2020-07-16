@@ -12,6 +12,7 @@
   - [Usage](#usage)
     - [Customizing the patch groups](#customizing-the-patch-groups)
   - [Controlling which patches get installed](#controlling-which-patches-get-installed)
+  - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
   - [Limitations](#limitations)
 
 ## Description
@@ -27,6 +28,7 @@ Once available patches are known via the above facts, the module will install th
 * For Linux operating systems, this happens through the native Package resource.
 * For Windows operating systems, this happens through the `windows_updates::kb` class, which requires the [noma4i/windows_updates](https://forge.puppet.com/noma4i/windows_updates) module to be installed.
 * By default, a reboot is performed at the end of a patch run that actually installed patches. You can change this behavior though.
+* You can define pre-patch, post-patch and pre-reboot commands for patching runs.
 
 ### Setup Requirements
 
@@ -43,7 +45,6 @@ To get started with the patching_as_code module, include it in your manifest:
 ```
 include patching_as_code
 ```
-
 This enables automatic detection of available patches, and put all the nodes in the `primary` patch group.
 By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
 
@@ -54,7 +55,6 @@ It is highly recommended to use Hiera to set the correct value for each node, fo
 ```
 patching_as_code::patch_group: early
 ```
-
 The module provides 5 patch groups out of the box:
 ```
 testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot
@@ -63,7 +63,6 @@ primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, per
 secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot
 late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot
 ```
-
 There are also 2 special built-in patch groups:
 ```
 always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot
@@ -84,7 +83,6 @@ patching_as_code::patch_schedule:
     max_runs:      <max number of times that Puppet can perform patching within the patch window>
     reboot:        always | never | ifneeded
 ```
-
 For example, say you want to have the following 2 patch groups:
 ```
 group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time, reboots if needed
@@ -116,7 +114,6 @@ To prevent KB2881685 from getting installed:
 patching_as_code::blacklist:
   - KB2881685
 ```
-
 To only allow the installation of a specific set of 3 KB articles:
 ```
 patching_as_code::whitelist:
@@ -124,8 +121,40 @@ patching_as_code::whitelist:
   - KB234567
   - KB345678
 ```
-
 Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the whitelist, and then gets further reduced by any blacklisted updates.
+
+## Defining pre/post-patching and pre-reboot commands
+
+You can control additional commands that get executed at specific times, to facilitate the patch run. For example, you may want to shutdown specific applications before patching, or drain a kubernetes node before rebooting. The order of operations is as follows:
+1) If reboots are enabled, check for pending reboots and reboot system immediately if a pending reboot is found
+2) Run pre-patching commands
+3) Install patches
+4) Run post-patching commands
+5) If reboots are enabled, run pre-reboot commands
+6) If reboots are enabled, reboot system
+
+To define the pre/post-patching and pre-reboot commands, you need to create hashes in Hiera. The commands will be executed as `Exec` resources, and you can use any of the [allowed attributes](https://puppet.com/docs/puppet/6.17/types/exec.html#exec-attributes) for that resource (just don't use metaparameters). There are 3 hashes you can define:
+```
+patching_as_code::pre_patch_commands
+patching_as_code::post_patch_commands
+patching_as_code::pre_reboot_commands
+```
+
+It's best to define this in Hiera, so that the commands can be tailored to individual nodes or groups of nodes.
+A hash for a command (let's use pre-reboot as an example) looks like this in Hiera:
+```
+patching_as_code::pre_reboot_commands:
+  prep k8s for reboot:
+    command: /usr/bin/kubectl drain k8s-3.company.local --ignore-daemonsets --delete-local-data
+```
+Here's another example, this time for a pre-patch powershell command on Windows:
+```
+patching_as_code::pre_patch_commands:
+  shutdown SQL server:
+    command: Stop-Service MSSQLSERVER -Force 
+    provider: powershell
+```
+As you can see, it's just like defining `Exec` resources.
 
 ## Limitations
 
