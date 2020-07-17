@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.1
+
+**Bugfixes**
+Ensure pre/post-patching & pre-reboot commands use the same schedule
+
 ## Release 0.2.0
 
 Fixes pending reboot logic, adds pre/post-patching & pre-reboot command support
