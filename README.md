@@ -49,7 +49,7 @@ or
 ```
 class {'patching_as_code':}
 ```
-This enables automatic detection of available patches, and put all the nodes in the `primary` patch group.
+This enables automatic detection of available patches, and puts all the nodes in the `primary` patch group.
 By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
 On PE 2019.8.0+ this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
 
@@ -59,11 +59,11 @@ class {'patching_as_code':
   classify_pe_patch => true
 }
 ```
-This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter.
+This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter. In this scenario, make sure you do not classify your nodes with `pe_patch` via the node groups or other means.
 
 ## Usage
 
-To control which patch group a node belongs to, you need to set `patch_group` parameter of the class.
+To control which patch group a node belongs to, you need to set the `patch_group` parameter of the class.
 It is highly recommended to use Hiera to set the correct value for each node, for example:
 ```
 patching_as_code::patch_group: early
