@@ -10,15 +10,15 @@
   "dependencies": [
     {
       "name": "noma4i/windows_updates",
-      "version_requirement": ">= 0.3.0"
+      "version_requirement": ">= 0.3.0 < 1.0.0"
     },
     {
       "name": "puppetlabs/powershell",
-      "version_requirement": ">= 3.0.1"
+      "version_requirement": ">= 3.0.1 < 4.0.0"
     },
     {
       "name": "puppetlabs/pwshlib",
-      "version_requirement": ">= 0.4.1"
+      "version_requirement": ">= 0.4.1 < 1.0.0"
     }
   ],
   "operatingsystem_support": [
