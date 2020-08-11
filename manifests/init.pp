@@ -1,15 +1,81 @@
-# Class: patching_as_code
-# Framework for patch mgmt as code.
-#
+# @summary
+#   Framework for patch management as code. Works alongside the puppetlabs/pe_patch or albatrossflavour/os_patching modules
+# 
+# @example Using the module with defaults, or controlling options through Hiera
+#   include patching_as_code
+# 
+# @example Forcing the classification of pe_patch on PE 2019.8.0+
+#   class {'patching_as_code':
+#     classify_pe_patch => true
+#   }
+# 
+# @example Forcing the use of albatrossflavour/os_patching on PE 2019.8.0+
+#   class {'patching_as_code':
+#     use_pe_patch => false
+#   }
+# 
+# @param [String] patch_group
+#   Name of the patch_group for this node. Must match one of the patch groups in $patch_schedule
+# @param [Hash] patch_schedule
+#   Hash of available patch_schedules. Default schedules are in /data/common.yaml of this module
+# @option patch_schedule [String] :day_of_week
+#   Day of the week to patch, valid options: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+# @option patch_schedule [Integer] :count_of_week
+#   Which week in the month to patch, use a number between 1 and 4
+# @option patch_schedule [String] :hours
+#   Which hours on patch day to patch, define a range as 'HH:MM - HH:MM'
+# @option patch_schedule [String] :max_runs
+#   How many Puppet runs during the patch window can Puppet install patches. Must be at least 1.
+# @option patch_schedule [String] :reboot
+#   Reboot behavior, valid options: 'always', 'never', 'ifneeded'
+# @param [Array] blocklist
+#   List of updates to block from installing
+# @param [Array] allowlist
+#   List of updates that are allowed to be installed. Any updates not on this list get blocked.
+# @param [Hash] pre_patch_commands
+#   Hash of command to run before patching
+# @option pre_patch_commands [String] :command
+#   The pre-patching command to execute
+# @option pre_patch_commands [String] :path
+#   (optional) The path for the command
+# @option pre_patch_commands [String] :provider
+#   (optional) The provider for the command
+# @param [Hash] post_patch_commands
+#   Hash of command to run after patching
+# @option post_patch_commands [String] :command
+#   The post-patching command to execute
+# @option post_patch_commands [String] :path
+#   (optional) The path for the command
+# @option post_patch_commands [String] :provider
+#   (optional) The provider for the command
+# @param [Hash] pre_reboot_commands
+#   Hash of command to run before rebooting
+# @option pre_reboot_commands [String] :command
+#   The pre-reboot command to execute
+# @option pre_reboot_commands [String] :path
+#   (optional) The path for the command
+# @option pre_reboot_commands [String] :provider
+#   (optional) The provider for the command
+# @param [Optional[Boolean]] use_pe_patch
+#   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
+# @param [Optional[Boolean]] classify_pe_patch
+#   Controls if the pe_patch class (PE 2019.8+) is controlled by this module.
+#   When enabled, this module will classify the node with pe_patch,
+#   and set it's patch_group according to this module's patch_group.
+#   When disabled (default), you can use PE's own "PE Patch Management" groups
+#   to classify nodes with pe_patch. In that case, please make sure you match
+#   the patch_group variable in pe_patch with the patch_group in patching_as_code
+# 
 class patching_as_code(
   String            $patch_group,
   Hash              $patch_schedule,
-  Array             $blacklist,
-  Array             $whitelist,
+  Array             $blocklist,
+  Array             $allowlist,
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
-  Optional[Boolean] $use_pe_patch = true, # Use the pe_patch module if available (PE 2019.8+)
+  Optional[Boolean] $use_pe_patch = true,
+  Optional[Boolean] $classify_pe_patch = false,
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -27,8 +93,11 @@ class patching_as_code(
   # Ensure the correct patching module is used and set patch_window/patch_group
   if $pe_patch {
     $patch_fact = 'pe_patch'
-    class { 'pe_patch':
-      patch_group => $patch_group,
+    if $classify_pe_patch {
+      # Only classify pe_patch if $classify_pe_patch == true
+      class { 'pe_patch':
+        patch_group => $patch_group,
+      }
     }
   } else {
     $patch_fact = 'os_patching'
@@ -80,13 +149,13 @@ class patching_as_code(
       $available_updates = []
     }
 
-    case $whitelist.count {
+    case $allowlist.count {
       0: {
-        $updates_to_install = $available_updates.filter |$item| { !($item in $blacklist) }
+        $updates_to_install = $available_updates.filter |$item| { !($item in $blocklist) }
       }
       default: {
-        $whitelisted_updates = $available_updates.filter |$item| { $item in $whitelist }
-        $updates_to_install = $whitelisted_updates.filter |$item| { !($item in $blacklist) }
+        $whitelisted_updates = $available_updates.filter |$item| { $item in $allowlist }
+        $updates_to_install = $whitelisted_updates.filter |$item| { !($item in $blocklist) }
       }
     }
 
@@ -101,7 +170,7 @@ class patching_as_code(
       if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
         # Pending reboot present, prevent patching and reboot immediately
         reboot { 'Patching as Code - Patch Reboot':
-          apply    => 'immediately',
+          #apply    => 'immediately',
           schedule => 'Patching as Code - Patch Window'
         }
         notify { 'Patching as Code - Pending reboot detected, performing reboot before patching...':
@@ -146,7 +215,7 @@ class patching_as_code(
                 }
               }
               reboot { 'Patching as Code - Patch Reboot':
-                apply    => 'finished',
+                #apply    => 'finished',
                 schedule => 'Patching as Code - Patch Window'
               }
             } else {
