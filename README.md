@@ -35,7 +35,7 @@ Once available patches are known via the above facts, the module will install th
 To start with patching_as_code, complete the following prerequirements:
 * Ensure this module and its dependencies are added to your control repo's Puppetfile
 * If you are **not** running Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile
-* If you **are** running Puppet Enterprise 2019.8.0 or higher, the built-in `pe_patch` module will be used by default. You can however force the use of the `os_patching` module if so desired, by setting the optional `patching_as_code::use_pe_patch` parameter to `false`
+* If you **are** running Puppet Enterprise 2019.8.0 or higher, the built-in `pe_patch` module will be used by default. You can however force the use of the `os_patching` module if so desired, by setting the optional `patching_as_code::use_pe_patch` parameter to `false`. To prevent duplicate declarations of the `pe_patch` class in PE 2019.8.0+, this module will default to NOT declaring the `pe_patch` class. This allows you to use the builtin "PE Patch Management" classification groups to classify `pe_patch`. If you however would like this module to control the classification of `pe_patch` for you (and sync the `patch_group` parameter), please set the `patching_as_code::classify_pe_patch` parameter to `true`.
 * For Linux operating systems, ensure your package managers are pointing to repositories that are publishing new package versions as needed
 * For Windows operating systems, ensure Windows Update is configured to check with a valid update server (either WSUS, Windows Update or Microsoft Update). If you want, you can use the [puppetlabs/wsus_client](https://forge.puppet.com/puppetlabs/wsus_client) module to manage the Windows Update configuration.
 
@@ -45,12 +45,25 @@ To get started with the patching_as_code module, include it in your manifest:
 ```
 include patching_as_code
 ```
-This enables automatic detection of available patches, and put all the nodes in the `primary` patch group.
+or
+```
+class {'patching_as_code':}
+```
+This enables automatic detection of available patches, and puts all the nodes in the `primary` patch group.
 By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
+On PE 2019.8.0+ this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
+
+To allow patching_as_code to control & declare the `pe_patch` class, change the declaration to:
+```
+class {'patching_as_code':
+  classify_pe_patch => true
+}
+```
+This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter. In this scenario, make sure you do not classify your nodes with `pe_patch` via the node groups or other means.
 
 ## Usage
 
-To control which patch group a node belongs to, you need to set `patch_group` parameter of the class.
+To control which patch group a node belongs to, you need to set the `patch_group` parameter of the class.
 It is highly recommended to use Hiera to set the correct value for each node, for example:
 ```
 patching_as_code::patch_group: early
@@ -107,21 +120,21 @@ patching_as_code::patch_schedule:
 
 ## Controlling which patches get installed
 
-If you need to limit which patches can get installed, use the blacklist/whitelist capabilties. This is best done through Hiera.
+If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera.
 
 To prevent KB2881685 from getting installed:
 ```
-patching_as_code::blacklist:
+patching_as_code::blocklist:
   - KB2881685
 ```
 To only allow the installation of a specific set of 3 KB articles:
 ```
-patching_as_code::whitelist:
+patching_as_code::allowlist:
   - KB123456
   - KB234567
   - KB345678
 ```
-Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the whitelist, and then gets further reduced by any blacklisted updates.
+Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
 
 ## Defining pre/post-patching and pre-reboot commands
 
