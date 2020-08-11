@@ -170,7 +170,7 @@ class patching_as_code(
       if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
         # Pending reboot present, prevent patching and reboot immediately
         reboot { 'Patching as Code - Patch Reboot':
-          #apply    => 'immediately',
+          apply    => 'immediately',
           schedule => 'Patching as Code - Patch Window'
         }
         notify { 'Patching as Code - Pending reboot detected, performing reboot before patching...':
@@ -215,7 +215,7 @@ class patching_as_code(
                 }
               }
               reboot { 'Patching as Code - Patch Reboot':
-                #apply    => 'finished',
+                apply    => 'finished',
                 schedule => 'Patching as Code - Patch Window'
               }
             } else {
