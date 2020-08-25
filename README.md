@@ -51,7 +51,7 @@ class {'patching_as_code':}
 ```
 This enables automatic detection of available patches, and puts all the nodes in the `primary` patch group.
 By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
-On PE 2019.8.0+ this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
+On PE 2019.8 or newer this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
 
 To allow patching_as_code to control & declare the `pe_patch` class, change the declaration to:
 ```

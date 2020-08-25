@@ -1,7 +1,7 @@
 {
   "name": "puppetlabs-patching_as_code",
   "version": "0.2.2",
-  "author": "Kevin Reeuwijk",
+  "author": "puppetlabs",
   "summary": "Automated patching through desired state code",
   "license": "Apache-2.0",
   "source": "https://forge.puppet.com/puppetlabs/patching_as_code",
