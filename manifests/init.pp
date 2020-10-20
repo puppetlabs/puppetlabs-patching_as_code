@@ -76,6 +76,7 @@ class patching_as_code(
   Hash              $pre_reboot_commands,
   Optional[Boolean] $use_pe_patch = true,
   Optional[Boolean] $classify_pe_patch = false,
+  Optional[Boolean] $patch_on_metered_links = false
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -114,7 +115,7 @@ class patching_as_code(
         range  => '00:00 - 23:59',
         repeat => 1440
       }
-      $_reboot = 'always'
+      $_reboot = 'ifneeded'
     }
     'never': {
       $bool_patch_day = false
@@ -166,71 +167,73 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $available_updates.count > 0 {
-      if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
-        # Pending reboot present, prevent patching and reboot immediately
-        reboot { 'Patching as Code - Patch Reboot':
-          apply    => 'immediately',
-          schedule => 'Patching as Code - Patch Window'
-        }
-        notify { 'Patching as Code - Pending reboot detected, performing reboot before patching...':
-          schedule => 'Patching as Code - Patch Window',
-          notify   => Reboot['Patching as Code - Patch Reboot']
-        }
-      } else {
-        # No pending reboots present or reboots not allowed, proceeding
-        case $facts['kernel'].downcase() {
-          /(windows|linux)/: {
-            # Run pre-patch commands if provided
-            $pre_patch_commands.each | $cmd, $cmd_opts | {
-              exec { "Patching as Code - Before patching - ${cmd}":
-                *        => $cmd_opts,
-                before   => Class["patching_as_code::${0}::patchday"],
-                schedule => 'Patching as Code - Patch Window'
-              }
-            }
-            # Perform main patching run
-            class { "patching_as_code::${0}::patchday":
-              updates    => $updates_to_install,
-              patch_fact => $patch_fact,
-              reboot     => $reboot
-            }
-            if $reboot {
-              # Reboot after patching
-              $post_patch_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - After patching - ${cmd}":
-                  *        => $cmd_opts,
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  before   => Reboot['Patching as Code - Patch Reboot'],
-                  schedule => 'Patching as Code - Patch Window'
-                } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
-              }
-              $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - Before reboot - ${cmd}":
-                  *        => $cmd_opts,
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  before   => Reboot['Patching as Code - Patch Reboot'],
-                  schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_pre_reboot']
-                }
-              }
-              reboot { 'Patching as Code - Patch Reboot':
-                apply    => 'finished',
-                schedule => 'Patching as Code - Patch Window'
-              }
-            } else {
-              # Do not reboot after patching, just run post_patch commands if given
-              $post_patch_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - After patching - ${cmd}":
-                  *        => $cmd_opts,
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  schedule => 'Patching as Code - Patch Window'
-                }
-              }
-            }
+    if $patch_on_metered_links or (! $facts['metered_link']) {
+      if $available_updates.count > 0 {
+        if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
+          # Pending reboot present, prevent patching and reboot immediately
+          reboot { 'Patching as Code - Patch Reboot':
+            apply    => 'immediately',
+            schedule => 'Patching as Code - Patch Window'
           }
-          default: {
-            fail('Unsupported operating system!')
+          notify { 'Patching as Code - Pending reboot detected, performing reboot before patching...':
+            schedule => 'Patching as Code - Patch Window',
+            notify   => Reboot['Patching as Code - Patch Reboot']
+          }
+        } else {
+          # No pending reboots present or reboots not allowed, proceeding
+          case $facts['kernel'].downcase() {
+            /(windows|linux)/: {
+              # Run pre-patch commands if provided
+              $pre_patch_commands.each | $cmd, $cmd_opts | {
+                exec { "Patching as Code - Before patching - ${cmd}":
+                  *        => $cmd_opts,
+                  before   => Class["patching_as_code::${0}::patchday"],
+                  schedule => 'Patching as Code - Patch Window'
+                }
+              }
+              # Perform main patching run
+              class { "patching_as_code::${0}::patchday":
+                updates    => $updates_to_install,
+                patch_fact => $patch_fact,
+                reboot     => $reboot
+              }
+              if $reboot {
+                # Reboot after patching
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching - ${cmd}":
+                    *        => $cmd_opts,
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    before   => Reboot['Patching as Code - Patch Reboot'],
+                    schedule => 'Patching as Code - Patch Window'
+                  } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+                }
+                $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - Before reboot - ${cmd}":
+                    *        => $cmd_opts,
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    before   => Reboot['Patching as Code - Patch Reboot'],
+                    schedule => 'Patching as Code - Patch Window',
+                    tag      => ['patching_as_code_pre_reboot']
+                  }
+                }
+                reboot { 'Patching as Code - Patch Reboot':
+                  apply    => 'finished',
+                  schedule => 'Patching as Code - Patch Window'
+                }
+              } else {
+                # Do not reboot after patching, just run post_patch commands if given
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching - ${cmd}":
+                    *        => $cmd_opts,
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - Patch Window'
+                  }
+                }
+              }
+            }
+            default: {
+              fail('Unsupported operating system!')
+            }
           }
         }
       }
