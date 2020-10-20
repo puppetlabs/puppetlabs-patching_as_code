@@ -16,4 +16,4 @@ if (Test-Path "HKLM:\SOFTWARE\Microsoft\DusmSvc\Profiles\$($if.InterfaceGuid)\*"
     }
 }
 
-Write-Host "metered_link=$($blnMetered.ToString().ToLower())"
+Write-Host $blnMetered.ToString().ToLower()
