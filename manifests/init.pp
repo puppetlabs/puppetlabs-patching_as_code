@@ -167,8 +167,8 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $patch_on_metered_links or (! $facts['metered_link']) {
-      if $available_updates.count > 0 {
+    if $available_updates.count > 0 {
+      if $patch_on_metered_links or (! $facts['metered_link']) {
         if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
           # Pending reboot present, prevent patching and reboot immediately
           reboot { 'Patching as Code - Patch Reboot':
@@ -236,6 +236,8 @@ class patching_as_code(
             }
           }
         }
+      } else {
+        warning('Puppet is skipping installation of patches due to the current network link being metered.')
       }
     }
   }
