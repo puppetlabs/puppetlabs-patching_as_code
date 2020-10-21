@@ -167,7 +167,7 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $available_updates.count > 0 {
+    if $updates_to_install.count > 0 {
       if $patch_on_metered_links or (! $facts['metered_link']) {
         if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
           # Pending reboot present, prevent patching and reboot immediately
