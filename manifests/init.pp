@@ -78,6 +78,7 @@ class patching_as_code(
   Optional[Boolean] $classify_pe_patch = false,
   Optional[Boolean] $patch_on_metered_links = false
 ) {
+  notify{'TestPAC':}
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
     fail("Patch group ${patch_group} is not valid as no associated schedule was found!
@@ -237,7 +238,7 @@ class patching_as_code(
           }
         }
       } else {
-        warning('Puppet is skipping installation of patches due to the current network link being metered.')
+        notify{'Puppet is skipping installation of patches due to the current network link being metered.':}
       }
     }
   }
