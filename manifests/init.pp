@@ -237,7 +237,7 @@ class patching_as_code(
           }
         }
       } else {
-        notice("Puppet is skipping installation of patches on ${::certname} due to the current network link being metered.")
+        notice("Puppet is skipping installation of patches on ${trusted['certname']} due to the current network link being metered.")
       }
     }
   }
