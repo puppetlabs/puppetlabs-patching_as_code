@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.3
+
+**Features**
+- Added a `metered_link` custom fact that detects metered network connections on Windows
+- Added a `patch_on_metered_links` parameter to the `patching_as_code` class, which controls if patches are installed when running over a metered link (Windows only). Defaults to `false`.
+
+## Release 0.2.2
+
+**Features**
+- This update ensures that patching_as_code defaults to NOT classify the pe_patch class on PE 2019.8.0, so that you can use the builtin "PE Patch Management" node group(s) to classify pe_patch. Since UI will be further improved in PE for this, it makes sense that this would be the leading way to classify pe_patch. This module can still be given control over pe_patch, as described in the updated Readme.
+- The blacklist and whitelist have been renamed to blocklist and allowlist.
+- Documentation has been updated, with a reference for the main manifest.
+
 ## Release 0.2.1
 
 **Bugfixes**

@@ -130,3 +130,14 @@ the patch_group variable in pe_patch with the patch_group in patching_as_code
 
 Default value: `false`
 
+##### `patch_on_metered_links`
+
+Data type: `Optional[Boolean]`
+
+Controls if patches are installed when the active network connection is a
+metered link. This setting only has affect for Windows operating systems.
+When enabled, patching are installed even over a metered link.
+When disabled (default), patches are not installed over a metered link.
+
+Default value: `false`
+

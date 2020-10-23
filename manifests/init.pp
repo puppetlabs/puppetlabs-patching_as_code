@@ -65,6 +65,11 @@
 #   When disabled (default), you can use PE's own "PE Patch Management" groups
 #   to classify nodes with pe_patch. In that case, please make sure you match
 #   the patch_group variable in pe_patch with the patch_group in patching_as_code
+# @param [Optional[Boolean]] patch_on_metered_links
+#   Controls if patches are installed when the active network connection is a
+#   metered link. This setting only has affect for Windows operating systems.
+#   When enabled, patching are installed even over a metered link.
+#   When disabled (default), patches are not installed over a metered link.
 # 
 class patching_as_code(
   String            $patch_group,
