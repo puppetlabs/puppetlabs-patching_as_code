@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.4
+
+**Bugfixes**
+- Fixes the datatype of the `metered_link` fact, this was expected to be Boolean but got reported as a String, causing the logic to break.
+
 ## Release 0.2.3
 
 **Features**

@@ -1,3 +1,4 @@
+
 Facter.add('metered_link') do
   confine kernel: 'windows'
   setcode do
@@ -10,6 +11,6 @@ Facter.add('metered_link') do
       'patching_as_code',
       'metered_link.ps1',
     )
-    Facter::Util::Resolution.exec("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}")
+    Facter::Util::Resolution.exec("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").to_s == 'true'
   end
 end
