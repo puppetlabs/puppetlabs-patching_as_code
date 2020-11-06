@@ -173,16 +173,7 @@ class patching_as_code(
     }
 
     if $updates_to_install.count > 0 {
-      notify { 'fact_value':
-         message => "The value of metered_link is: ${facts['metered_link2']}"
-      }
-      notify { 'fact_direct':
-         message => $facts['metered_link2']
-      }
-      notify { 'fact_comparison':
-         message => ! $facts['metered_link2']
-      }
-      if $patch_on_metered_links or (! $facts['metered_link']) {
+      if $patch_on_metered_links == true or ($facts['metered_link'] == false) or empty($facts['metered_link']) {
         if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
           # Pending reboot present, prevent patching and reboot immediately
           reboot { 'Patching as Code - Patch Reboot':
