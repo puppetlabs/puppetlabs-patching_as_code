@@ -16,4 +16,4 @@ if (Test-Path "HKLM:\SOFTWARE\Microsoft\DusmSvc\Profiles\$($if.InterfaceGuid)\*"
     }
 }
 
-Write-Host $blnMetered.ToString().ToLower()
+$blnMetered | ConvertTo-Json
