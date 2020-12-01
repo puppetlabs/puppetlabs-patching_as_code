@@ -18,6 +18,36 @@ class patching_as_code::linux::patchday (
         schedule => 'Patching as Code - Patch Window'
       }
     }
+    'dnf': {
+      Package {
+        require  => Exec['Patching as Code - Clean DNF'],
+      }
+      exec { 'Patching as Code - Clean DNF':
+        command  => 'dnf clean all',
+        path     => '/usr/bin',
+        schedule => 'Patching as Code - Patch Window'
+      }
+    }
+    'apt': {
+      Package {
+        require  => Exec['Patching as Code - Clean Apt'],
+      }
+      exec { 'Patching as Code - Clean Apt':
+        command  => 'apt-get clean',
+        path     => '/usr/bin',
+        schedule => 'Patching as Code - Patch Window'
+      }
+    }
+    'zypper': {
+      Package {
+        require  => Exec['Patching as Code - Clean Zypper'],
+      }
+      exec { 'Patching as Code - Clean Zypper':
+        command  => 'zypper cc --all',
+        path     => '/usr/bin',
+        schedule => 'Patching as Code - Patch Window'
+      }
+    }
     default: { }
   }
 
@@ -26,12 +56,18 @@ class patching_as_code::linux::patchday (
       package { $package:
         ensure   => 'latest',
         schedule => 'Patching as Code - Patch Window',
-        notify   => Reboot['Patching as Code - Patch Reboot']
+        notify   => [
+          Exec["${patch_fact}::exec::fact"],
+          Reboot['Patching as Code - Patch Reboot']
+        ]
       }
     } else {
       package { $package:
         ensure   => 'latest',
-        schedule => 'Patching as Code - Patch Window'
+        schedule => 'Patching as Code - Patch Window',
+        notify   => [
+          Exec["${patch_fact}::exec::fact"],
+        ]
       }
     }
   }
