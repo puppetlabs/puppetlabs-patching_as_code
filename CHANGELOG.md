@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.5
+
+**Features**
+- Added cache cleanup for other providers (dnf, apt, zypper)
+- Added refresh of `pe_patch::fact::exec` / `os_patching::fact::exec` resources, to auto-update patch state after patching. This prevents unneccesary patching runs that perform no updates
+
+**Bugfixes**
+- Increased reboot delay after patching from 1 to 5 minutes, to account for remaining activities in the Puppet run
+
 ## Release 0.2.4
 
 **Bugfixes**
