@@ -223,7 +223,8 @@ class patching_as_code(
                 }
                 reboot { 'Patching as Code - Patch Reboot':
                   apply    => 'finished',
-                  schedule => 'Patching as Code - Patch Window'
+                  schedule => 'Patching as Code - Patch Window',
+                  timeout  => '300'
                 }
               } else {
                 # Do not reboot after patching, just run post_patch commands if given

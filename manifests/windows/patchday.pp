@@ -12,12 +12,18 @@ class patching_as_code::windows::patchday (
       windows_updates::kb { $kb:
         ensure      => 'present',
         maintwindow => 'Patching as Code - Patch Window',
-        notify      => Reboot['Patching as Code - Patch Reboot']
+        notify      => [
+          Exec["${patch_fact}::exec::fact"],
+          Reboot['Patching as Code - Patch Reboot']
+        ]
       }
     } else {
       windows_updates::kb { $kb:
         ensure      => 'present',
-        maintwindow => 'Patching as Code - Patch Window'
+        maintwindow => 'Patching as Code - Patch Window',
+        notify      => [
+          Exec["${patch_fact}::exec::fact"],
+        ]
       }
     }
   }
