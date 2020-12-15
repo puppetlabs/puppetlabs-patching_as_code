@@ -12,6 +12,7 @@
   - [Usage](#usage)
     - [Customizing the patch groups](#customizing-the-patch-groups)
   - [Controlling which patches get installed](#controlling-which-patches-get-installed)
+  - [Defining situations when patching needs to be skipped](#Defining-situations-when-patching-needs-to-be-skipped)
   - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
   - [Limitations](#limitations)
 
@@ -120,7 +121,7 @@ patching_as_code::patch_schedule:
 
 ## Controlling which patches get installed
 
-If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera.
+If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera by defining an array values for `patching_as_code::blocklist` and/or `patching_as_code::allowlist`.
 
 To prevent KB2881685 from getting installed:
 ```
@@ -135,6 +136,39 @@ patching_as_code::allowlist:
   - KB345678
 ```
 Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
+
+## Defining situations when patching needs to be skipped
+
+There could be situations where you don't want patching to occur if certain conditions are met. This module supports two such situations:
+
+* A specific process is running that must not be interrupted by patching
+* The node to be patched is currently connected via a metered link (Windows only)
+
+### Managing unsafe processes for patching
+
+You can define a list of unsafe processes which, if any are found to be active on the node, should cause patching to be skipped. This is best done through Hiera, by defining an array value for `patching_as_code::unsafe_process_list`.
+
+To skip patching if `application1` or `application2` is among the active processes:
+```
+patching_as_code::unsafe_process_list:
+  - application1
+  - application2
+```
+
+This works on both Linux and Windows, and the matching is done case-insensitive. If one process from the unsafe_process_list is found as an active process, patching will be skipped.
+
+### Managing patching over metered links (Windows only)
+
+By default, this module will not perform patching over metered links (e.g. 3G/4G connections). You can control this behavior through the `patch_on_metered_links` parameter. To force patching to occur even over metered links, either define this value in Hiera:
+```
+patching_as_code::patch_on_metered_links: true
+```
+or set this parameter as part of calling the class:
+```
+class {'patching_as_code':
+  patch_on_metered_links => true
+}
+```
 
 ## Defining pre/post-patching and pre-reboot commands
 

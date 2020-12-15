@@ -32,6 +32,8 @@
 #   List of updates to block from installing
 # @param [Array] allowlist
 #   List of updates that are allowed to be installed. Any updates not on this list get blocked.
+# @param [Array] unsafe_process_list
+#   List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
 # @param [Hash] pre_patch_commands
 #   Hash of command to run before patching
 # @option pre_patch_commands [String] :command
@@ -76,6 +78,7 @@ class patching_as_code(
   Hash              $patch_schedule,
   Array             $blocklist,
   Array             $allowlist,
+  Array             $unsafe_process_list,
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
@@ -87,6 +90,17 @@ class patching_as_code(
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
     fail("Patch group ${patch_group} is not valid as no associated schedule was found!
     Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+  }
+
+  # Verify the puppet_confdir from the puppetlabs/puppet_agent module is present
+  unless $facts['puppet_confdir'] {
+    fail('The puppetlabs/patching_as_code module depends on the puppetlabs/puppet_agent module, please add it to your setup!')
+  }
+
+  # Write local config file for unsafe processes
+  file { "${facts['puppet_confdir']}/patching_unsafe_processes":
+    ensure  => file,
+    content => $unsafe_process_list.join('\n')
   }
 
   # Determine which patching module to use
@@ -173,7 +187,7 @@ class patching_as_code(
     }
 
     if $updates_to_install.count > 0 {
-      if ($patch_on_metered_links == true) or (! $facts['metered_link'] == true) {
+      if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
           # Pending reboot present, prevent patching and reboot immediately
           reboot { 'Patching as Code - Patch Reboot':
@@ -243,7 +257,14 @@ class patching_as_code(
           }
         }
       } else {
-        notice("Puppet is skipping installation of patches on ${trusted['certname']} due to the current network link being metered.")
+        if $facts['metered_link'] == true {
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          due to the current network link being metered.")
+        }
+        if $facts['patch_unsafe_process_active'] == true {
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          because a process is active that is unsafe for patching.")
+        }
       }
     }
   }
