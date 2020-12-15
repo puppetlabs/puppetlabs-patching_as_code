@@ -19,6 +19,6 @@ Facter.add('patch_unsafe_process_active') do
         return true if running == true
       end      
     end
-    return false
+    false
   end
 end
