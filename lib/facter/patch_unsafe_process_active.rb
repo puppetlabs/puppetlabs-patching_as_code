@@ -10,7 +10,7 @@ Facter.add('patch_unsafe_process_active') do
       when 'Linux'
         tasklist = `ps -A`.downcase
       end
-      true if tasklist.include? processname.downcase
+      tasklist.include? processname.downcase
     end
 
     processfile = Pathname.new(Puppet.settings['confdir'] + '/patching_unsafe_processes')
