@@ -17,7 +17,8 @@ Facter.add('patch_unsafe_process_active') do
         running = process_running(line.chomp)
         next if running == false
         return true if running == true
-      end
+      end      
     end
+    return false
   end
 end
