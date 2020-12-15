@@ -73,6 +73,12 @@ Data type: `Array`
 
 List of updates that are allowed to be installed. Any updates not on this list get blocked.
 
+##### `unsafe_process_list`
+
+Data type: `Array`
+
+List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
+
 ##### `pre_patch_commands`
 
 Data type: `Hash`

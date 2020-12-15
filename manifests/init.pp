@@ -32,6 +32,8 @@
 #   List of updates to block from installing
 # @param [Array] allowlist
 #   List of updates that are allowed to be installed. Any updates not on this list get blocked.
+# @param [Array] unsafe_process_list
+#   List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
 # @param [Hash] pre_patch_commands
 #   Hash of command to run before patching
 # @option pre_patch_commands [String] :command
