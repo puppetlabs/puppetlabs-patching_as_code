@@ -185,7 +185,7 @@ class patching_as_code(
     }
 
     if $updates_to_install.count > 0 {
-      if ($patch_on_metered_links == true) or (! $facts['metered_link'] == true) {
+      if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
           # Pending reboot present, prevent patching and reboot immediately
           reboot { 'Patching as Code - Patch Reboot':
@@ -255,7 +255,14 @@ class patching_as_code(
           }
         }
       } else {
-        notice("Puppet is skipping installation of patches on ${trusted['certname']} due to the current network link being metered.")
+        if $facts['metered_link'] == true {
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          due to the current network link being metered.")
+        }
+        if $facts['patch_unsafe_process_active'] == true {
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          because a process is active that is unsafe for patching.")
+        }
       }
     }
   }
