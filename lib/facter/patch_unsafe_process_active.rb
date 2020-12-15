@@ -1,17 +1,21 @@
 require 'pathname'
 
 Facter.add('patch_unsafe_process_active') do
-  confine kernel: 'windows'
+  confine { Facter.value(:kernel) == 'windows' || Facter.value(:kernel) == 'Linux' }
   setcode do
     def process_running(processname)
-      tasklist = `tasklist`.downcase
+      case Facter.value(:kernel)
+      when 'windows'
+        tasklist = `tasklist`.downcase
+      when 'Linux'
+        tasklist = `ps -A`.downcase
+      end
       true if tasklist.include? processname.downcase
     end
     
     processfile = Pathname.new(Puppet.settings['confdir'] + '/patching_unsafe_processes')
     result = false
     if processfile.exist?
-      tasklist = `tasklist`.downcase
       unsafe_processes = File.open(processfile, 'r').read
       unsafe_processes.each_line do |line|
         next if line =~ /^#|^$/
