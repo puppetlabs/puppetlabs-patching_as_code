@@ -12,7 +12,7 @@
   - [Usage](#usage)
     - [Customizing the patch groups](#customizing-the-patch-groups)
   - [Controlling which patches get installed](#controlling-which-patches-get-installed)
-  - [Defining situations when patching needs to be skipped](#Defining-situations-when-patching-needs-to-be-skipped)
+  - [Defining situations when patching needs to be skipped](#defining-situations-when-patching-needs-to-be-skipped)
   - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
   - [Limitations](#limitations)
 
