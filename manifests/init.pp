@@ -256,12 +256,12 @@ class patching_as_code(
         }
       } else {
         if $facts['metered_link'] == true {
-          notice("Puppet is skipping installation of patches on ${trusted['certname']} due to \
-          the current network link being metered.")
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          due to the current network link being metered.")
         }
         if $facts['patch_unsafe_process_active'] == true {
-          notice("Puppet is skipping installation of patches on ${trusted['certname']} because a \
-          process is active that is unsafe for patching.")
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
+          because a process is active that is unsafe for patching.")
         }
       }
     }
