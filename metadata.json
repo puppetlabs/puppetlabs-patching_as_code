@@ -1,6 +1,6 @@
 {
   "name": "puppetlabs-patching_as_code",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "author": "puppetlabs",
   "summary": "Automated patching through desired state code",
   "license": "Apache-2.0",
@@ -19,6 +19,10 @@
     {
       "name": "puppetlabs/pwshlib",
       "version_requirement": ">= 0.4.0 < 2.0.0"
+    },
+    {
+      "name": "puppetlabs/puppet_agent",
+      "version_requirement": ">= 4.0.0 < 6.0.0"
     }
   ],
   "operatingsystem_support": [

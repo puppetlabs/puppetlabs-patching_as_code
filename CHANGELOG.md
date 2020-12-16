@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.7
+
+**Bugfixes**
+- Added dependency to `puppetlabs/puppet_agent` to the module's metadata
+
 ## Release 0.2.6
 
 **Features**
