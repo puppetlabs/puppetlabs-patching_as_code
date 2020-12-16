@@ -1,5 +1,4 @@
 source ENV['GEM_SOURCE'] || 'https://rubygems.org'
-ruby "2.5.3"
 
 def location_for(place_or_version, fake_version = nil)
   git_url_regex = %r{\A(?<url>(https?|git)[:@][^#]*)(#(?<branch>.*))?}
@@ -71,3 +70,5 @@ extra_gemfiles.each do |gemfile|
   end
 end
 # vim: syntax=ruby
+
+gem 'puppetfile-resolver', '0.4.0'
