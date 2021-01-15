@@ -60,6 +60,6 @@ class patching_as_code::linux::patchday (
       notify   => $triggers
     }
   }
-  ensure_packages($updates)
+  ensure_packages($updates,{'ensure' => 'latest'})
 
 }
