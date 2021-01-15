@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.2.8
+
+**Bugfixes**
+- Ensured Linux patches cannot cause duplicate declarations
+
 ## Release 0.2.7
 
 **Bugfixes**
