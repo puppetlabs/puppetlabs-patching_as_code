@@ -53,24 +53,22 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    if defined_with_params(Package[$package]) {
-      notify{"Patching1: Package[${package}] is defined":}
-    }
-
     if defined(Package[$package]) {
-      notify{"Patching2: Package[${package}] is defined":}
+      # Package resource already declared elsewhere, collect & override params for patching
+      Package <| title == $package |> {
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        require  => $clean_exec,
+        notify   => $triggers,
+      }
+    } else {
+      # Package not managed by Puppet, define resource for patching
+      package { $package:
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        require  => $clean_exec,
+        notify   => $triggers,
+      }
     }
-    # Use a virtual resource to safely declare the package first.
-    # @package { "patch_update_${package}":
-    #   ensure   => 'latest',
-    #   name     => $package,
-    #   schedule => 'Patching as Code - Patch Window',
-    #   require  => $clean_exec,
-    #   notify   => $triggers,
-    #   tag      => 'patching_as_code'
-    # }
   }
-
-  # Use a resource collector to safely realize all packages.
-  # Package <| tag == 'patching_as_code' |>
 }
