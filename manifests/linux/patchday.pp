@@ -54,9 +54,12 @@ class patching_as_code::linux::patchday (
       false => [ $fact_refresh ]
     }
     if defined_with_params(Package[$package]) {
-      notify{"Patching: Package[${package}] is defined":}
+      notify{"Patching1: Package[${package}] is defined":}
     }
 
+    if defined(Package[$package]) {
+      notify{"Patching2: Package[${package}] is defined":}
+    }
     # Use a virtual resource to safely declare the package first.
     # @package { "patch_update_${package}":
     #   ensure   => 'latest',
