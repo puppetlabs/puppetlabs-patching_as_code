@@ -53,7 +53,7 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    if defined(Package[$package]) {
+    if defined_with_params(Package[$package]) {
       # Package resource already declared elsewhere, collect & override params for patching
       Package <| title == $package |> {
         ensure   => 'latest',
