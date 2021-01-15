@@ -97,11 +97,6 @@ class patching_as_code(
     fail('The puppetlabs/patching_as_code module depends on the puppetlabs/puppet_agent module, please add it to your setup!')
   }
 
-  # Define patching stage, to ensure defined() lookups happen after main stage
-  stage { 'patchday':
-    require => Stage['main'],
-  }
-
   # Write local config file for unsafe processes
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
     ensure  => file,
@@ -219,8 +214,7 @@ class patching_as_code(
               class { "patching_as_code::${0}::patchday":
                 updates    => $updates_to_install,
                 patch_fact => $patch_fact,
-                reboot     => $reboot,
-                stage      => 'patchday'
+                reboot     => $reboot
               }
               if $reboot {
                 # Reboot after patching
