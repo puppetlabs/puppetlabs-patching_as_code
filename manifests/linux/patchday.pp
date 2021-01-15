@@ -54,9 +54,9 @@ class patching_as_code::linux::patchday (
       false => [ $fact_refresh ]
     }
     if Package[$package] {
-      notify{"Package ${package} is defined in catalog":}
+      notify{"Patching: Package ${package} is defined in catalog":}
     }
-    
+
     # Use a virtual resource to safely declare the package first.
     # @package { "patch_update_${package}":
     #   ensure   => 'latest',
