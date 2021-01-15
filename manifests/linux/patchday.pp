@@ -53,13 +53,22 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
+    # Use a resource collector to temporarily override packages defined elsewhere
     Package <| title == $package |> {
       ensure   => 'latest',
       schedule => 'Patching as Code - Patch Window',
       require  => $clean_exec,
       notify   => $triggers
     }
+    unless Package[$package] {
+      # Use a package resource to update otherwise unmanaged packages
+      package { $package:
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        require  => $clean_exec,
+        notify   => $triggers
+      }
+    }
   }
-  ensure_packages($updates,{'ensure' => 'latest'})
 
 }
