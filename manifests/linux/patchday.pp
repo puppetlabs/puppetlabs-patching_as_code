@@ -53,13 +53,22 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    Package <| title == $package |> {
-      ensure   => 'latest',
-      schedule => 'Patching as Code - Patch Window',
-      require  => $clean_exec,
-      notify   => $triggers
+    if defined_with_params(Package[$package]) {
+      # Package resource already declared elsewhere, collect & override params for patching
+      Package <| title == $package |> {
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        require  => $clean_exec,
+        notify   => $triggers,
+      }
+    } else {
+      # Package not managed by Puppet, define resource for patching
+      package { $package:
+        ensure   => 'latest',
+        schedule => 'Patching as Code - Patch Window',
+        require  => $clean_exec,
+        notify   => $triggers,
+      }
     }
   }
-  ensure_packages($updates)
-
 }
