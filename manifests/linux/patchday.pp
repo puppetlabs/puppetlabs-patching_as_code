@@ -53,17 +53,21 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    # Use a virtual resource to safely declare the package first.
-    @package { "patch_update_${package}":
-      ensure   => 'latest',
-      name     => $package,
-      schedule => 'Patching as Code - Patch Window',
-      require  => $clean_exec,
-      notify   => $triggers,
-      tag      => 'patching_as_code'
+    if Package[$package] {
+      notify{"Package ${package} is defined in catalog":}
     }
+    
+    # Use a virtual resource to safely declare the package first.
+    # @package { "patch_update_${package}":
+    #   ensure   => 'latest',
+    #   name     => $package,
+    #   schedule => 'Patching as Code - Patch Window',
+    #   require  => $clean_exec,
+    #   notify   => $triggers,
+    #   tag      => 'patching_as_code'
+    # }
   }
 
   # Use a resource collector to safely realize all packages.
-  Package <| tag == 'patching_as_code' |>
+  # Package <| tag == 'patching_as_code' |>
 }
