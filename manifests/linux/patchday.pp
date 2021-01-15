@@ -54,19 +54,16 @@ class patching_as_code::linux::patchday (
       false => [ $fact_refresh ]
     }
     # Use a virtual resource to safely declare the package first.
-    @package { $package:
+    @package { "patch_update_${package}":
       ensure   => 'latest',
-    }
-    # Use a resource collector to safely realize the package and
-    # override its parameters. If the package is declared somewhere
-    # else as well, the collector will combine the declarations and
-    # temporarily use the parameters we set here.
-    Package <| title == $package |> {
-      ensure   => 'latest',
+      name     => $package,
       schedule => 'Patching as Code - Patch Window',
       require  => $clean_exec,
-      notify   => $triggers
+      notify   => $triggers,
+      tag      => 'patching_as_code'
     }
   }
 
+  # Use a resource collector to safely realize all packages.
+  Package <| tag == 'patching_as_code' |>
 }
