@@ -53,8 +53,8 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    if Package[$package] {
-      notify{"Patching: Package ${package} is defined in catalog":}
+    if defined_with_params(Package[$package]) {
+      notify{"Patching: Package[${package}] is defined":}
     }
 
     # Use a virtual resource to safely declare the package first.
