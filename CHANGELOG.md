@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.3.0
+
+**Features**
+- Rewrote updating of Linux packages to use a custom type (`patch_package`), which dynamically updates and/or creates `package` resources for patching in the catalog on the agent side. This ensures no duplicate package declarations can occur on the server side, due to the parsing-order dependency of `defined()` and `defined_with_params()`. Neither of these functions are used anymore.
+
 ## Release 0.2.9
 
 **Bugfixes**
