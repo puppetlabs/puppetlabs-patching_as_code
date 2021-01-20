@@ -13,9 +13,9 @@ before_install:
   - gem --version
   - bundle -v
   - bundle install
-  - gem uninstall rubocop-rspec -I
-  - gem uninstall rubocop-i18n -I
-  - gem uninstall rubocop -I
+  - gem uninstall rubocop-rspec -I -x
+  - gem uninstall rubocop-i18n -I -x
+  - gem uninstall rubocop -I -x
   - gem install rubocop --version 1.7.0 -f
   - gem install rubocop-rspec --version 2.1.0 -f
 script:
