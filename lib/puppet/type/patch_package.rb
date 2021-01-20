@@ -68,16 +68,16 @@ Puppet::Type.newtype(:patch_package) do
 
     if package_in_catalog
       if ['present', 'installed', 'latest'].include?(res['ensure'].to_s)
-        Puppet.send('notice', "#{package_res} (managed) will be updated as part of patching_as_code")
+        Puppet.send('notice', "#{package_res} (managed) will be updated by Patching_as_code")
         catalog.resource(package_res)['ensure'] = 'latest'
         catalog.resource(package_res)['schedule'] = self[:patch_window]
         catalog.resource(package_res)['require'] = Array(catalog.resource(package_res)['require']) + cache_clean.value
         catalog.resource(package_res)['notify'] = Array(catalog.resource(package_res)['notify']) + triggers.value
       else
-        Puppet.send('notice', "#{package_res} (managed) will not be updated as part of patching_as_code (ensure => <version> detected)")
+        Puppet.send('notice', "#{package_res} (managed) will not be updated by Patching_as_code, due to the package enforcing a specific version")
       end
     else
-      Puppet.send('notice', "#{package_res} (unmanaged) will be updated as part of patching_as_code")
+      Puppet.send('notice', "#{package_res} (unmanaged) will be updated by Patching_as_code")
       catalog.add_resource(Puppet::Type.type('package').new(
                              title: package,
                              ensure: 'latest',
