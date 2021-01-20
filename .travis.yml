@@ -16,8 +16,8 @@ before_install:
   - gem uninstall rubocop-rspec -I -x
   - gem uninstall rubocop-i18n -I -x
   - gem uninstall rubocop -I -x
-  - gem install rubocop --version 1.7.0 -f
-  - gem install rubocop-rspec --version 2.1.0 -f
+  - gem install rubocop --version 1.7.0 -f --ignore-dependencies
+  - gem install rubocop-rspec --version 2.1.0 -f --ignore-dependencies
 script:
   - 'bundle exec rake $CHECK'
 bundler_args: --without system_tests
