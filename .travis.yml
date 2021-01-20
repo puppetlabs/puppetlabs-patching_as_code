@@ -12,6 +12,8 @@ before_install:
   - '[ -z "$RUBYGEMS_VERSION" ] || (yes || true) | gem update --system $RUBYGEMS_VERSION'
   - gem --version
   - bundle -v
+  - gem update rubocop
+  - gem update rubocop-rspec
 script:
   - 'bundle exec rake $CHECK'
 bundler_args: --without system_tests
