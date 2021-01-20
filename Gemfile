@@ -70,3 +70,6 @@ extra_gemfiles.each do |gemfile|
   end
 end
 # vim: syntax=ruby
+
+gem "rubocop", '~> 1.7.0',
+gem "rubocop-rspec", '~> 2.1.0',
