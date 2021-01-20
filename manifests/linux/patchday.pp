@@ -9,40 +9,31 @@ class patching_as_code::linux::patchday (
 
   case $facts['package_provider'] {
     'yum': {
-      $clean_exec = Exec['Patching as Code - Clean Yum']
-      exec { 'Patching as Code - Clean Yum':
-        command  => 'yum clean all',
-        path     => '/usr/bin',
-        schedule => 'Patching as Code - Patch Window'
-      }
+      $cmd      = 'yum clean all'
+      $cmd_path = '/usr/bin'
     }
     'dnf': {
-      $clean_exec = Exec['Patching as Code - Clean DNF']
-      exec { 'Patching as Code - Clean DNF':
-        command  => 'dnf clean all',
-        path     => '/usr/bin',
-        schedule => 'Patching as Code - Patch Window'
-      }
+      $cmd      = 'dnf clean all'
+      $cmd_path = '/usr/bin'
     }
     'apt': {
-      $clean_exec = Exec['Patching as Code - Clean Apt']
-      exec { 'Patching as Code - Clean Apt':
-        command  => 'apt-get clean',
-        path     => '/usr/bin',
-        schedule => 'Patching as Code - Patch Window'
-      }
+      $cmd      = 'apt-get clean'
+      $cmd_path = '/usr/bin'
     }
     'zypper': {
-      $clean_exec = Exec['Patching as Code - Clean Zypper']
-      exec { 'Patching as Code - Clean Zypper':
-        command  => 'zypper cc --all',
-        path     => '/usr/bin',
-        schedule => 'Patching as Code - Patch Window'
-      }
+      $cmd      = 'zypper cc --all'
+      $cmd_path = '/usr/bin'
     }
     default: {
-      $clean_exec = undef
+      $cmd = 'true'
+      $cmd_path = '/usr/bin'
     }
+  }
+
+  exec { 'Patching as Code - Clean Cache':
+    command  => $cmd,
+    path     => $cmd_path,
+    schedule => 'Patching as Code - Patch Window'
   }
 
   $fact_refresh = Exec["${patch_fact}::exec::fact"]
@@ -53,22 +44,10 @@ class patching_as_code::linux::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    if defined_with_params(Package[$package]) {
-      # Package resource already declared elsewhere, collect & override params for patching
-      Package <| title == $package |> {
-        ensure   => 'latest',
-        schedule => 'Patching as Code - Patch Window',
-        require  => $clean_exec,
-        notify   => $triggers,
-      }
-    } else {
-      # Package not managed by Puppet, define resource for patching
-      package { $package:
-        ensure   => 'latest',
-        schedule => 'Patching as Code - Patch Window',
-        require  => $clean_exec,
-        notify   => $triggers,
-      }
+    patch_package { $package:
+      patch_window => 'Patching as Code - Patch Window',
+      cache_clean  => Exec['Patching as Code - Clean Cache'],
+      triggers     => $triggers
     }
   }
 }

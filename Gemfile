@@ -70,5 +70,3 @@ extra_gemfiles.each do |gemfile|
   end
 end
 # vim: syntax=ruby
-
-gem 'puppetfile-resolver', '0.4.0'
