@@ -12,6 +12,7 @@ before_install:
   - '[ -z "$RUBYGEMS_VERSION" ] || (yes || true) | gem update --system $RUBYGEMS_VERSION'
   - gem --version
   - bundle -v
+  - bundle install
   - gem remove rubocop-rspec -I
   - gem remove rubocop-i18n -I
   - gem remove rubocop -I
