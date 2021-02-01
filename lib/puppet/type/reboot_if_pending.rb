@@ -23,17 +23,16 @@ Puppet::Type.newtype(:reboot_if_pending) do
     end
   end
 
-  # See if the package to patch exists in the catalog
-  # If package is found, update resource one-time for patching
-  # If package is not found, create a one-time package resource
+  # Add a reboot resource to the catalog if a pending reboot is detected
   def pre_run_check
     # Check for pending reboots
     pending_reboot = false
-    case parameter(:os).value.downcase
+    kernel = parameter(:os).value.downcase
+    case kernel
     when 'windows'
       sysroot = ENV['SystemRoot']
       powershell = "#{sysroot}\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
-      # get the script path relative to the Puppet agent
+      # get the script path relative to the Puppet Type
       checker_script = File.join(
         __dir__,
         '..',
@@ -41,23 +40,21 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.ps1',
       )
-      result = (Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.downcase)
-      pending_reboot = result == 'true'
-      puts "Check result: abc#{result}abc"
-      case pending_reboot
-      when true
-        puts 'Result is Boolean true'
-      when false
-        puts 'Result is Boolean false'
-      else
-        puts 'Result is non Boolean'
-      end
+      pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.downcase == 'true'
     when 'linux'
       puts 'Not yet implemented'
     else
       raise Puppet::Error, "Patching_as_code - Unsupported Operating System type: #{kernel}"
     end
-    puts "Pending_reboot: #{pending_reboot}"
+    return unless pending_reboot
+
+    Puppet.send('notice', 'Patching_as_code - Pending OS reboot detected, node will reboot at start of patch window today')
+    catalog.add_resource(Puppet::Type.type('reboot').new(
+                           title: 'Patching as Code - Pending OS reboot',
+                           apply: 'immediately',
+                           schedule: self[:patch_window],
+                           before: "Class[patching_as_code::#{kernel}::patchday]",
+                         ))
 
     # if package_in_catalog
     #   if ['present', 'installed', 'latest'].include?(res['ensure'].to_s)
