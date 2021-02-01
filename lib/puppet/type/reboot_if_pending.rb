@@ -36,8 +36,8 @@ Puppet::Type.newtype(:reboot_if_pending) do
     end
 
     # Check for pending reboots
-    scope = closure_scope
-    kernel = scope['facts']['kernel']
+    puts facts
+    kernel = facts['kernel']
     pending_reboot = false
     case kernel.downcase
     when 'windows'
