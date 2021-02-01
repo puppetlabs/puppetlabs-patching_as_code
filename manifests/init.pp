@@ -203,7 +203,7 @@ class patching_as_code(
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
             # Reboot the node first if a reboot is already pending
-            reboot_if_pending {'Patching as Code - Reboot Pending':
+            reboot_if_pending {'Patching as Code':
               patch_window   => 'Patching as Code - Patch Window',
               patchday_class => Class["patching_as_code::${0}::patchday"]
             }

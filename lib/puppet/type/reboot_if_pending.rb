@@ -30,7 +30,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
     # Validate :patchday_class
     patchday_class = parameter(:patchday_class)
     begin
-      retrieve_resource_reference(patchday_class)
+      retrieve_resource_reference(patchday_class.value)
     rescue ArgumentError => e
       raise Puppet::Error, "Parameter patchday_class failed: #{e} at #{@file}:#{@line}"
     end
