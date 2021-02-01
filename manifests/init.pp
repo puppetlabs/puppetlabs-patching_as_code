@@ -157,6 +157,7 @@ class patching_as_code(
     }
   }
 
+  notify { "Is it patchday? ${$bool_patch_day}":}
   if $bool_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
