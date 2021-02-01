@@ -46,6 +46,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
     else
       raise Puppet::Error, "Patching_as_code - Unsupported Operating System type: #{kernel}"
     end
+    Puppet.send('notice', 'Patching_as_code - No Pending OS reboot detected') unless pending_reboot
     return unless pending_reboot
 
     Puppet.send('notice', 'Patching_as_code - Pending OS reboot detected, node will reboot at start of patch window today')
