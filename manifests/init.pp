@@ -157,7 +157,6 @@ class patching_as_code(
     }
   }
 
-  notify { "Is it patchday? ${$bool_patch_day}":}
   if $bool_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
@@ -187,9 +186,6 @@ class patching_as_code(
       default:    {false}
     }
 
-    notify{'Updates to install':
-      message => "${updates_to_install}"
-    }
     if $updates_to_install.count > 0 {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         # if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
