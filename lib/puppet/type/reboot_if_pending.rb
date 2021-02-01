@@ -44,11 +44,11 @@ Puppet::Type.newtype(:reboot_if_pending) do
     when 'linux'
       puts 'Not yet implemented'
     else
-      raise Puppet::Error, "Patching_as_code - Unsupported Operating System type: #{kernel}"
+      raise Puppet::Error, "Patching as Code - Unsupported Operating System type: #{kernel}"
     end
     return unless pending_reboot
 
-    Puppet.send('notice', 'Patching_as_code - Pending OS reboot detected, node will reboot at start of patch window today')
+    Puppet.send('notice', 'Patching as Code - Pending OS reboot detected, node will reboot at start of patch window today')
     catalog.add_resource(Puppet::Type.type('reboot').new(
                            title: 'Patching as Code - Pending OS reboot',
                            apply: 'immediately',
@@ -62,27 +62,6 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            notify: 'Reboot[Patching as Code - Pending OS reboot]',
                            before: "Class[patching_as_code::#{kernel}::patchday]",
                          ))
-
-    # if package_in_catalog
-    #   if ['present', 'installed', 'latest'].include?(res['ensure'].to_s)
-    #     Puppet.send('notice', "#{package_res} (managed) will be updated by Patching_as_code")
-    #     catalog.resource(package_res)['ensure'] = 'latest'
-    #     catalog.resource(package_res)['schedule'] = self[:patch_window]
-    #     catalog.resource(package_res)['require'] = Array(catalog.resource(package_res)['require']) + cache_clean.value
-    #     catalog.resource(package_res)['notify'] = Array(catalog.resource(package_res)['notify']) + triggers.value
-    #   else
-    #     Puppet.send('notice', "#{package_res} (managed) will not be updated by Patching_as_code, due to the package enforcing a specific version")
-    #   end
-    # else
-    #   Puppet.send('notice', "#{package_res} (unmanaged) will be updated by Patching_as_code")
-    #   catalog.add_resource(Puppet::Type.type('package').new(
-    #                          title: package,
-    #                          ensure: 'latest',
-    #                          schedule: self[:patch_window],
-    #                          require: cache_clean.value,
-    #                          notify: triggers.value,
-    #                        ))
-    # end
   end
 
   def retrieve_resource_reference(res)

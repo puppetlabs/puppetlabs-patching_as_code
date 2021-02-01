@@ -4,11 +4,15 @@
 class patching_as_code::windows::patchday (
   Array   $updates,
   String  $patch_fact,
-  Boolean $reboot
+  Boolean $reboot,
+  Boolean $reboot_if_needed
 ) {
 
   $fact_refresh = Exec["${patch_fact}::exec::fact"]
-  $patch_reboot = Reboot['Patching as Code - Patch Reboot']
+  $patch_reboot = $reboot_if_needed ? {
+    true  => Exec['Patching as Code - Patch Reboot (if needed)'],
+    false => Reboot['Patching as Code - Patch Reboot']
+  }
 
   $updates.each | $kb | {
     $triggers = $reboot ? {

@@ -182,24 +182,16 @@ class patching_as_code(
     $reboot = case $_reboot {
       'always':   {true}
       'never':    {false}
-      'ifneeded': {$facts[$patch_fact]['reboots']['reboot_required'] ? {true => true, default => false}}
+      'ifneeded': {true}
+      default:    {false}
+    }
+    $reboot_if_needed = case $_reboot {
+      'ifneeded': {true}
       default:    {false}
     }
 
     if $updates_to_install.count > 0 {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
-        # if $facts[$patch_fact]['reboots']['reboot_required'] == true and $reboot {
-        #   # Pending reboot present, prevent patching and reboot immediately
-        #   reboot { 'Patching as Code - Patch Reboot':
-        #     apply    => 'immediately',
-        #     schedule => 'Patching as Code - Patch Window'
-        #   }
-        #   notify { 'Patching as Code - Pending reboot detected, performing reboot before patching...':
-        #     schedule => 'Patching as Code - Patch Window',
-        #     notify   => Reboot['Patching as Code - Patch Reboot']
-        #   }
-        # } else {
-        # No pending reboots present or reboots not allowed, proceeding
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
             # Reboot the node first if a reboot is already pending
@@ -217,33 +209,48 @@ class patching_as_code(
             }
             # Perform main patching run
             class { "patching_as_code::${0}::patchday":
-              updates    => $updates_to_install,
-              patch_fact => $patch_fact,
-              reboot     => $reboot
+              updates          => $updates_to_install,
+              patch_fact       => $patch_fact,
+              reboot           => $reboot,
+              reboot_if_needed => $reboot_if_needed
             }
             if $reboot {
               # Reboot after patching
+              if $reboot_if_needed {
+                # Use an exec to perform the reboot shortly after the Puppet run completes
+                exec {'Patching as Code - Patch Reboot (if needed)':
+                  command   => file('patching_as_code/reboot_if_pending.ps1'),
+                  provider  => powershell,
+                  logoutput => true
+                }
+                $reboot_resource = Exec['Patching as Code - Patch Reboot (if needed)']
+              } else {
+                # Reboot as part of this Puppet run
+                reboot { 'Patching as Code - Patch Reboot':
+                  apply    => 'finished',
+                  schedule => 'Patching as Code - Patch Window',
+                  timeout  => '300'
+                }
+                $reboot_resource = Reboot['Patching as Code - Patch Reboot']
+              }
+              # Perform post-patching execs
               $post_patch_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - After patching - ${cmd}":
                   *        => $cmd_opts,
                   require  => Class["patching_as_code::${0}::patchday"],
-                  before   => Reboot['Patching as Code - Patch Reboot'],
+                  before   => $reboot_resource,
                   schedule => 'Patching as Code - Patch Window'
                 } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
               }
+              # Perform pre-reboot execs
               $pre_reboot_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - Before reboot - ${cmd}":
                   *        => $cmd_opts,
                   require  => Class["patching_as_code::${0}::patchday"],
-                  before   => Reboot['Patching as Code - Patch Reboot'],
+                  before   => $reboot_resource,
                   schedule => 'Patching as Code - Patch Window',
                   tag      => ['patching_as_code_pre_reboot']
                 }
-              }
-              reboot { 'Patching as Code - Patch Reboot':
-                apply    => 'finished',
-                schedule => 'Patching as Code - Patch Window',
-                timeout  => '300'
               }
             } else {
               # Do not reboot after patching, just run post_patch commands if given
