@@ -28,10 +28,8 @@ Puppet::Type.newtype(:reboot_if_pending) do
   # If package is not found, create a one-time package resource
   def pre_run_check
     # Check for pending reboots
-    kernel = parameter(:os).value
-    puts kernel
     pending_reboot = false
-    case kernel.downcase
+    case parameter(:os).value.downcase
     when 'windows'
       sysroot = ENV['SystemRoot']
       powershell = "#{sysroot}\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
@@ -43,9 +41,10 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.ps1',
       )
-      result = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").to_s.downcase == 'true'
+      result = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}")
+      puts "Raw check result: #{result}"
+      puts 'Boolean check result: ' + result.to_s.downcase == 'true'
       pending_reboot = result
-      puts "Check result: #{result}"
       case result
       when true
         puts 'Result is Boolean true'
