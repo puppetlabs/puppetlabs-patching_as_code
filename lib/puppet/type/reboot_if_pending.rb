@@ -41,11 +41,9 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.ps1',
       )
-      result = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}")
-      puts "Raw check result: #{result}"
-      puts "Downcased check result: #{result.to_s.downcase}"
-      puts 'Boolean check result: ' + result.to_s.downcase == 'true'
+      result = (Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").to_s.downcase == 'true')
       pending_reboot = result
+      puts "Check result: #{result}"
       case result
       when true
         puts 'Result is Boolean true'
