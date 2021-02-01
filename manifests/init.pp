@@ -204,8 +204,8 @@ class patching_as_code(
           /(windows|linux)/: {
             # Reboot the node first if a reboot is already pending
             reboot_if_pending {'Patching as Code':
-              patch_window   => 'Patching as Code - Patch Window',
-              patchday_class => Class["patching_as_code::${0}::patchday"]
+              patch_window => 'Patching as Code - Patch Window',
+              os           => $0
             }
             # Run pre-patch commands if provided
             $pre_patch_commands.each | $cmd, $cmd_opts | {

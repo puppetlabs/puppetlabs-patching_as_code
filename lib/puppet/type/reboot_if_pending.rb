@@ -12,13 +12,13 @@ Puppet::Type.newtype(:reboot_if_pending) do
     desc 'Puppet schedule to link the reboot resource to'
   end
 
-  newparam(:patchday_class) do
-    desc 'Name of the patchday class'
+  newparam(:os) do
+    desc 'OS type from kernel fact'
   end
 
   # All parameters are required
   validate do
-    [:name, :patch_window, :patchday_class].each do |param|
+    [:name, :patch_window, :os].each do |param|
       raise Puppet::Error, "Required parameter missing: #{param}" unless @parameters[param]
     end
   end
@@ -27,18 +27,8 @@ Puppet::Type.newtype(:reboot_if_pending) do
   # If package is found, update resource one-time for patching
   # If package is not found, create a one-time package resource
   def pre_run_check
-    # Validate :patchday_class
-    patchday_class = parameter(:patchday_class)
-    begin
-      retrieve_resource_reference(patchday_class.value)
-    rescue ArgumentError => e
-      raise Puppet::Error, "Parameter patchday_class failed: #{e} at #{@file}:#{@line}"
-    end
-
     # Check for pending reboots
-    node_facts = Puppet::Node::Facts
-    puts node_facts
-    kernel = node_facts['kernel']
+    kernel = parameter(:os).value
     puts kernel
     pending_reboot = false
     case kernel.downcase
