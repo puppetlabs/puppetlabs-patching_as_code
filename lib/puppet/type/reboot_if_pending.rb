@@ -53,7 +53,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            title: 'Patching as Code - Pending OS reboot',
                            apply: 'immediately',
                            schedule: self[:patch_window],
-                           before: "Class[patching_as_code::#{kernel}::patchday]",
+                           before: "Class['patching_as_code::#{kernel}::patchday']",
                          ))
 
     # if package_in_catalog
