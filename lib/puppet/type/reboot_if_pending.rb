@@ -36,8 +36,9 @@ Puppet::Type.newtype(:reboot_if_pending) do
     end
 
     # Check for pending reboots
-    puts facts
-    kernel = facts['kernel']
+    puts :kernel
+    puts Puppet[:kernel]
+    kernel = Puppet[:kernel]
     pending_reboot = false
     case kernel.downcase
     when 'windows'
