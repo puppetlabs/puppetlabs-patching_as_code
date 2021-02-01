@@ -39,6 +39,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
       checker_script = File.join(
         __dir__,
         '..',
+        '..',
         'patching_as_code',
         'pending_reboot.ps1',
       )
