@@ -43,6 +43,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
       )
       result = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}")
       puts "Raw check result: #{result}"
+      puts "Downcased check result: #{result.to_s.downcase}"
       puts 'Boolean check result: ' + result.to_s.downcase == 'true'
       pending_reboot = result
       case result
