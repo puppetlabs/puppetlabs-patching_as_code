@@ -18,11 +18,8 @@ function patching_as_code::is_patchday(
   $startofmonth = Timestamp("${year}-${month}-01", '%Y-%m-%e')
   $som_weekday  = Integer($startofmonth.strftime('%u'))
 
-  notify{"Start of Month: ${startofmonth}":}
-  notify{"Start of Month Weekday: ${som_weekday}":}
-
   # Calculate first occurence of same weekday
-  if $day_number - $som_weekday <= 0 {
+  if $day_number - $som_weekday < 0 {
     $firstocc = 1 + 7 + $day_number - $som_weekday
   } else {
     $firstocc = 1 + $day_number - $som_weekday
