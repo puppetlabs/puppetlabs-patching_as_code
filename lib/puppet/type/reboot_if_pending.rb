@@ -56,9 +56,13 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            before: "Class[patching_as_code::#{kernel}::patchday]",
                          ))
 
-    puts catalog.resource('Reboot[Patching as Code - Pending OS reboot]')
-    puts catalog.resource('Reboot[Patching as Code - Pending OS reboot]')['schedule']
-    puts catalog.resource('Reboot[Patching as Code - Pending OS reboot]')['before']
+    catalog.add_resource(Puppet::Type.type('notify').new(
+                           title: 'Patching as Code - Performing Pending OS reboot before patching...',
+                           schedule: parameter(:patch_window).value,
+                           notify: 'Reboot[Patching as Code - Pending OS reboot]',
+                           before: "Class[patching_as_code::#{kernel}::patchday]",
+                         ))
+
     # if package_in_catalog
     #   if ['present', 'installed', 'latest'].include?(res['ensure'].to_s)
     #     Puppet.send('notice', "#{package_res} (managed) will be updated by Patching_as_code")
