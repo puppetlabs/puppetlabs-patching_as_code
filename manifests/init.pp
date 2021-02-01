@@ -219,9 +219,10 @@ class patching_as_code(
               if $reboot_if_needed {
                 # Use an exec to perform the reboot shortly after the Puppet run completes
                 exec {'Patching as Code - Patch Reboot (if needed)':
-                  command   => file('patching_as_code/reboot_if_pending.ps1'),
-                  provider  => powershell,
-                  logoutput => true
+                  command     => file('patching_as_code/reboot_if_pending.ps1'),
+                  provider    => powershell,
+                  logoutput   => true,
+                  refreshonly => true
                 }
                 $reboot_resource = Exec['Patching as Code - Patch Reboot (if needed)']
               } else {
