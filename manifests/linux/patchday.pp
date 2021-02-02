@@ -35,7 +35,8 @@ class patching_as_code::linux::patchday (
     command  => $cmd,
     path     => $cmd_path,
     schedule => 'Patching as Code - Patch Window'
-  }
+  } -> anchor {'patching_as_code::patchday::start':
+  } -> anchor {'patching_as_code::patchday::end':}
 
   $fact_refresh = Exec["${patch_fact}::exec::fact"]
   $patch_reboot = $reboot_if_needed ? {
@@ -50,7 +51,6 @@ class patching_as_code::linux::patchday (
     }
     patch_package { $package:
       patch_window => 'Patching as Code - Patch Window',
-      cache_clean  => Exec['Patching as Code - Clean Cache'],
       triggers     => $triggers
     }
   }

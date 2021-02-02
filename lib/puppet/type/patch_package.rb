@@ -12,15 +12,6 @@ Puppet::Type.newtype(:patch_package) do
     desc 'Puppet schedule to link package resource to'
   end
 
-  newparam(:cache_clean, array_matching: :all) do
-    desc 'Name of Exec resource to clean cache'
-
-    munge do |values|
-      values = [values] unless values.is_a? Array
-      values
-    end
-  end
-
   newparam(:triggers, array_matching: :all) do
     desc 'Resources to notify after updating the package'
 
@@ -32,7 +23,7 @@ Puppet::Type.newtype(:patch_package) do
 
   # All parameters are required
   validate do
-    [:name, :patch_window, :cache_clean, :triggers].each do |param|
+    [:name, :patch_window, :triggers].each do |param|
       raise Puppet::Error, "Required parameter missing: #{param}" unless @parameters[param]
     end
   end
@@ -41,14 +32,6 @@ Puppet::Type.newtype(:patch_package) do
   # If package is found, update resource one-time for patching
   # If package is not found, create a one-time package resource
   def pre_run_check
-    # Validate :cache_clean
-    cache_clean = parameter(:cache_clean)
-    cache_clean.value.each do |res|
-      retrieve_resource_reference(res)
-    rescue ArgumentError => e
-      raise Puppet::Error, "Parameter cache_clean failed: #{e} at #{@file}:#{@line}"
-    end
-
     # Validate :triggers
     triggers = parameter(:triggers)
     triggers.value.each do |res|
@@ -71,28 +54,21 @@ Puppet::Type.newtype(:patch_package) do
         Puppet.send('notice', "#{package_res} (managed) will be updated by Patching_as_code")
         catalog.resource(package_res)['ensure'] = 'latest'
         catalog.resource(package_res)['schedule'] = self[:patch_window]
-        catalog.resource(package_res)['require'] = Array(catalog.resource(package_res)['require']) + cache_clean.value
+        catalog.resource(package_res)['before'] = Array(catalog.resource(package_res)['before']) + ['Anchor[patching_as_code::patchday::end]']
+        catalog.resource(package_res)['require'] = Array(catalog.resource(package_res)['require']) + ['Anchor[patching_as_code::patchday::start]']
         catalog.resource(package_res)['notify'] = Array(catalog.resource(package_res)['notify']) + triggers.value
       else
         Puppet.send('notice', "#{package_res} (managed) will not be updated by Patching_as_code, due to the package enforcing a specific version")
       end
     else
       Puppet.send('notice', "#{package_res} (unmanaged) will be updated by Patching_as_code")
-      catalog.add_resource(Puppet::Type.type('package').new(
-                             title: package,
-                             ensure: 'latest',
-                             schedule: self[:patch_window],
-                             require: cache_clean.value,
-                             notify: triggers.value,
-                             tag: [
-                               'patching_as_code::linux::patchday',
-                               'patching_as_code',
-                               'class',
-                               'package',
-                               'default',
-                               'node',
-                             ],
-                           ))
+      catalog.create_resource('package',
+                              title: package,
+                              ensure: 'latest',
+                              schedule: self[:patch_window],
+                              before: 'Anchor[patching_as_code::patchday::end]'
+                              require: 'Anchor[patching_as_code::patchday::start]',
+                              notify: triggers.value)
     end
   end
 
