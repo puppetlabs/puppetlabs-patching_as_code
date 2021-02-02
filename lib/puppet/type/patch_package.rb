@@ -66,7 +66,7 @@ Puppet::Type.newtype(:patch_package) do
                               title: package,
                               ensure: 'latest',
                               schedule: self[:patch_window],
-                              before: 'Anchor[patching_as_code::patchday::end]'
+                              before: 'Anchor[patching_as_code::patchday::end]',
                               require: 'Anchor[patching_as_code::patchday::start]',
                               notify: triggers.value)
     end
