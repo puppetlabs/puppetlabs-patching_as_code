@@ -211,7 +211,8 @@ class patching_as_code(
               exec { "Patching as Code - Before patching - ${cmd}":
                 *        => $cmd_opts,
                 before   => Class["patching_as_code::${0}::patchday"],
-                schedule => 'Patching as Code - Patch Window'
+                schedule => 'Patching as Code - Patch Window',
+                tag      => ['patching_as_code_pre_patching']
               }
             }
             # Perform main patching run
@@ -262,7 +263,8 @@ class patching_as_code(
                   *        => $cmd_opts,
                   require  => Class["patching_as_code::${0}::patchday"],
                   before   => $reboot_resource,
-                  schedule => 'Patching as Code - Patch Window'
+                  schedule => 'Patching as Code - Patch Window',
+                  tag      => ['patching_as_code_post_patching']
                 } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
               }
               # Perform pre-reboot execs
