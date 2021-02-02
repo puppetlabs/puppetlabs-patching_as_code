@@ -236,7 +236,8 @@ class patching_as_code(
                   }
                   'linux': {
                     exec {'Patching as Code - Patch Reboot (if needed)':
-                      command     => file('patching_as_code/reboot_if_pending.sh'),
+                      command     => 'reboot_if_pending.ps1',
+                      path        => "${facts['puppet_vardir']}/lib/patching_as_code",
                       logoutput   => true,
                       refreshonly => true
                     }
