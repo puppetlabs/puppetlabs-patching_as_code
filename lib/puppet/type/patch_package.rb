@@ -84,6 +84,14 @@ Puppet::Type.newtype(:patch_package) do
                              schedule: self[:patch_window],
                              require: cache_clean.value,
                              notify: triggers.value,
+                             tag: [
+                               'patching_as_code::linux::patchday',
+                               'patching_as_code',
+                               'class',
+                               'package',
+                               'default',
+                               'node',
+                             ],
                            ))
     end
   end
