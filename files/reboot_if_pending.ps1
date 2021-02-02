@@ -17,7 +17,11 @@ function Get-PendingReboot {
     }
     catch { }
 
-    if ($rebootPending) { Write-Host "Patching_as_code: A reboot is required" }
+    if ($rebootPending) {
+        Write-Host "Patching_as_code: A reboot is required"
+    } else {
+        Write-Host "Patching_as_code: No reboot is needed, doing nothing"
+    }
 
     # return result
     $rebootPending
@@ -25,5 +29,5 @@ function Get-PendingReboot {
 
 if (Get-PendingReboot) {
     Write-Host "Patching_as_code: Scheduling a reboot to happen in 5 minutes"
-    & shutdown /r /t 300 /c "Patching_as_code: Scheduling a reboot to happen in 5 minutes" /d p:2:17
+    & shutdown /r /t 300 /c "Patching_as_code: Rebooting system due to a pending reboot after patching" /d p:2:17
 }

@@ -42,7 +42,15 @@ Puppet::Type.newtype(:reboot_if_pending) do
       )
       pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.downcase == 'true'
     when 'linux'
-      puts 'Not yet implemented'
+      # get the script path relative to the Puppet Type
+      checker_script = File.join(
+        __dir__,
+        '..',
+        '..',
+        'patching_as_code',
+        'pending_reboot.sh',
+      )
+      pending_reboot = Puppet::Util::Execution.execute(checker_script).chomp.to_s.downcase == 'true'
     else
       raise Puppet::Error, "Patching as Code - Unsupported Operating System type: #{kernel}"
     end

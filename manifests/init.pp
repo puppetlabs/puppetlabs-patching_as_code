@@ -126,6 +126,13 @@ class patching_as_code(
     }
   }
 
+  # Ensure yum-utils package is installed on CentOS 8 for needs-restarting
+  if $facts['osfamily'] == 'RedHat' and $facts['operatingsystemmajrelease'] == 8 {
+    package { 'yum-utils':
+      ensure => 'present'
+    }
+  }
+
   # Determine if today is Patch Day for this node's $patch_group
   case $patch_group {
     'always': {
@@ -218,11 +225,25 @@ class patching_as_code(
               # Reboot after patching
               if $reboot_if_needed {
                 # Use an exec to perform the reboot shortly after the Puppet run completes
-                exec {'Patching as Code - Patch Reboot (if needed)':
-                  command     => file('patching_as_code/reboot_if_pending.ps1'),
-                  provider    => powershell,
-                  logoutput   => true,
-                  refreshonly => true
+                case $facts['kernel'].downcase() {
+                  'windows': {
+                    exec {'Patching as Code - Patch Reboot (if needed)':
+                      command     => file('patching_as_code/reboot_if_pending.ps1'),
+                      provider    => powershell,
+                      logoutput   => true,
+                      refreshonly => true
+                    }
+                  }
+                  'linux': {
+                    exec {'Patching as Code - Patch Reboot (if needed)':
+                      command     => file('patching_as_code/reboot_if_pending.sh'),
+                      logoutput   => true,
+                      refreshonly => true
+                    }
+                  }
+                  default: {
+                    fail('Unsupported operating system!')
+                  }
                 }
                 $reboot_resource = Exec['Patching as Code - Patch Reboot (if needed)']
               } else {
