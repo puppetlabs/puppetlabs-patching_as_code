@@ -50,7 +50,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.sh',
       )
-      pending_reboot = Puppet::Util::Execution.execute(checker_script).chomp.to_s.downcase == 'true'
+      pending_reboot = Puppet::Util::Execution.execute("/bin/sh #{checker_script}").chomp.to_s.downcase == 'true'
     else
       raise Puppet::Error, "Patching as Code - Unsupported Operating System type: #{kernel}"
     end
