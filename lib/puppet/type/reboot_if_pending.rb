@@ -63,10 +63,10 @@ Puppet::Type.newtype(:reboot_if_pending) do
     pre_reboot_resources = []
     catalog.resources.each do |res|
       next unless res.type.to_s == 'exec'
-      # next unless res['tag'].is_a? Array
+
       puts "pre_filtered resource: #{res}"
       puts "pre_filtered resource tags: #{res['tag']}"
-      next unless res['tag'] & ['patching_as_code_pre_patching', 'patching_as_code_post_patching', 'patching_as_code_pre_reboot'].any?
+      next unless Array(res['tag']) & ['patching_as_code_pre_patching', 'patching_as_code_post_patching', 'patching_as_code_pre_reboot'].any?
 
       puts "filtered resource: #{res}"
       case res['tag']
