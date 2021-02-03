@@ -63,8 +63,8 @@ Puppet::Type.newtype(:reboot_if_pending) do
       next unless res['tag'].is_a? Array
       next unless res['tag'].include? 'patching_as_code_pre_reboot'
 
-      catalog.resource(res.to_s)['require'] = nil
-      catalog.resource(res.to_s)['before']  = nil
+      catalog.resource(res.to_s)['require'] = []
+      catalog.resource(res.to_s)['before']  = []
       pre_reboot_resources << res.to_s
     end
 
