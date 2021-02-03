@@ -67,12 +67,11 @@ Puppet::Type.newtype(:reboot_if_pending) do
       next unless (res['tag'] & ['patching_as_code_pre_patching', 'patching_as_code_post_patching', 'patching_as_code_pre_reboot']).any?
 
       puts "filtered resource: #{res}"
-      case res['tag']
-      when 'patching_as_code_pre_patching'
+      if res['tag'].include?('patching_as_code_pre_patching')
         pre_patch_resources << res
-      when 'patching_as_code_post_patching'
+      elsif res['tag'].include?('patching_as_code_post_patching')
         post_patch_resources << res
-      when 'patching_as_code_pre_reboot'
+      elsif res['tag'].include?('patching_as_code_pre_reboot')
         pre_reboot_resources << res
       end
     end
