@@ -28,6 +28,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
     # Find all pre-reboot resources
     catalog.resources.each do |res|
       puts res
+      puts res['tag']
     end
 
     # Check for pending reboots
