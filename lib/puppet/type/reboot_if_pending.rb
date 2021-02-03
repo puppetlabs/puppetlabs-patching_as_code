@@ -25,6 +25,11 @@ Puppet::Type.newtype(:reboot_if_pending) do
 
   # Add a reboot resource to the catalog if a pending reboot is detected
   def pre_run_check
+    # Find all pre-reboot resources
+    catalog.resources.each do |res|
+      puts res
+    end
+
     # Check for pending reboots
     pending_reboot = false
     kernel = parameter(:os).value.downcase
