@@ -57,15 +57,35 @@ Puppet::Type.newtype(:reboot_if_pending) do
     return unless pending_reboot
 
     Puppet.send('notice', 'Patching as Code - Pending OS reboot detected, node will reboot at start of patch window today')
-    # Find any pre-reboot exec resources, add to array var and remove existing require: and before: definitions
+    ## Reorganize dependencies for pre-patch, post-patch and pre-reboot resources:
+    pre_patch_resources = []
+    post_patch_resources = []
     pre_reboot_resources = []
     catalog.resources.each do |res|
-      next unless res['tag'].is_a? Array
-      next unless res['tag'].include? 'patching_as_code_pre_reboot'
+      next unless res['tag'].is_a? Array 
+      next unless res['tag'] & ['patching_as_code_pre_patching','patching_as_code_post_patching','patching_as_code_pre_reboot'].any?
 
+      case res['tag']
+      when 'patching_as_code_pre_patching'
+        pre_patch_resources << res
+      when 'patching_as_code_post_patching'
+        post_patch_resources << res
+      when 'patching_as_code_pre_reboot'
+        pre_reboot_resources << res
+      end
+    end
+    ## pre-patch resources should gain Reboot[Patching as Code - Pending OS reboot] for require
+    pre_patch_resources.each do |res|
+      catalog.resource(res.to_s)['require'] << 'Reboot[Patching as Code - Pending OS reboot]'
+    end
+    ## post-patch resources should lose their dependency on any pre-reboot resources
+    post_patch_resources.each do |res|
+      catalog.resource(res.to_s)['require'] = Array(catalog.resource(res.to_s)['require']) - pre_reboot_resources
+    end
+    ## pre-reboot resources should lose existing dependencies
+    pre_reboot_resources.each do |res|
       catalog.resource(res.to_s)['require'] = []
       catalog.resource(res.to_s)['before']  = []
-      pre_reboot_resources << res.to_s
     end
 
     catalog.add_resource(Puppet::Type.type('reboot').new(
