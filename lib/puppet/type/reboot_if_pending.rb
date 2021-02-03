@@ -57,11 +57,13 @@ Puppet::Type.newtype(:reboot_if_pending) do
     return unless pending_reboot
 
     Puppet.send('notice', 'Patching as Code - Pending OS reboot detected, node will reboot at start of patch window today')
-    ## Reorganize dependencies for pre-patch, post-patch and pre-reboot resources:
+    ## Reorganize dependencies for pre-patch, post-patch and pre-reboot exec resources:
     pre_patch_resources = []
     post_patch_resources = []
     pre_reboot_resources = []
     catalog.resources.each do |res|
+      puts "pre_pre_filtered resource: #{res}"
+      puts "pre_pre_filtered resource: #{res.type}"
       next unless res.type == 'exec'
       # next unless res['tag'].is_a? Array
       puts "pre_filtered resource: #{res}"
