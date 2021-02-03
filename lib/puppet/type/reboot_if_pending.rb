@@ -60,6 +60,8 @@ Puppet::Type.newtype(:reboot_if_pending) do
     # Find any pre-reboot exec resources, add to array var and remove existing require: and before: definitions
     pre_reboot_resources = []
     catalog.resources.each do |res|
+      next unless res.key?('tag')
+      next unless res['tag'].is_a? Array
       next unless res['tag'].include? 'patching_as_code_pre_reboot'
 
       catalog.resource(res.to_s)['require'] = nil
