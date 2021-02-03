@@ -25,12 +25,6 @@ Puppet::Type.newtype(:reboot_if_pending) do
 
   # Add a reboot resource to the catalog if a pending reboot is detected
   def pre_run_check
-    # Find all pre-reboot resources
-    catalog.resources.each do |res|
-      puts res
-      puts res['tag']
-    end
-
     # Check for pending reboots
     pending_reboot = false
     kernel = parameter(:os).value.downcase
@@ -63,11 +57,22 @@ Puppet::Type.newtype(:reboot_if_pending) do
     return unless pending_reboot
 
     Puppet.send('notice', 'Patching as Code - Pending OS reboot detected, node will reboot at start of patch window today')
+    # Find any pre-reboot exec resources, add to array var and remove existing require: and before: definitions
+    pre_reboot_resources = []
+    catalog.resources.each do |res|
+      next unless res['tag'].include? 'patching_as_code_pre_reboot'
+
+      catalog.resource(res.to_s)['require'] = nil
+      catalog.resource(res.to_s)['before']  = nil
+      pre_reboot_resources << res.to_s
+    end
+
     catalog.add_resource(Puppet::Type.type('reboot').new(
                            title: 'Patching as Code - Pending OS reboot',
                            apply: 'immediately',
                            schedule: parameter(:patch_window).value,
                            before: "Class[patching_as_code::#{kernel}::patchday]",
+                           require: pre_reboot_resources,
                          ))
 
     catalog.add_resource(Puppet::Type.type('notify').new(
@@ -75,6 +80,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            schedule: parameter(:patch_window).value,
                            notify: 'Reboot[Patching as Code - Pending OS reboot]',
                            before: "Class[patching_as_code::#{kernel}::patchday]",
+                           require: pre_reboot_resources,
                          ))
   end
 
