@@ -63,7 +63,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
     pre_reboot_resources = []
     catalog.resources.each do |res|
       next unless res['tag'].is_a? Array 
-      next unless res['tag'] & ['patching_as_code_pre_patching','patching_as_code_post_patching','patching_as_code_pre_reboot'].any?
+      next unless res['tag'] & ['patching_as_code_pre_patching', 'patching_as_code_post_patching', 'patching_as_code_pre_reboot'].any?
 
       case res['tag']
       when 'patching_as_code_pre_patching'
@@ -74,16 +74,25 @@ Puppet::Type.newtype(:reboot_if_pending) do
         pre_reboot_resources << res
       end
     end
+    puts 'pre_patch_resources:'
+    puts pre_patch_resources
+    puts 'post_patch_resources:'
+    puts post_patch_resources
+    puts 'pre_reboot_resources:'
+    puts pre_reboot_resources
     ## pre-patch resources should gain Reboot[Patching as Code - Pending OS reboot] for require
     pre_patch_resources.each do |res|
+      puts "pre_patch_resource: #{res}"
       catalog.resource(res.to_s)['require'] << 'Reboot[Patching as Code - Pending OS reboot]'
     end
     ## post-patch resources should lose their dependency on any pre-reboot resources
     post_patch_resources.each do |res|
+      puts "post_patch_resource: #{res}"
       catalog.resource(res.to_s)['require'] = Array(catalog.resource(res.to_s)['require']) - pre_reboot_resources
     end
     ## pre-reboot resources should lose existing dependencies
     pre_reboot_resources.each do |res|
+      puts "pre_reboot_resource: #{res}"
       catalog.resource(res.to_s)['require'] = []
       catalog.resource(res.to_s)['before']  = []
     end
