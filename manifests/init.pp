@@ -225,94 +225,53 @@ class patching_as_code(
             if $reboot {
               # Reboot after patching
               if $reboot_if_needed {
-                # Use an exec to perform the reboot shortly after the Puppet run completes
+                # Define an Exec to perform the reboot shortly after the Puppet run completes
                 case $facts['kernel'].downcase() {
                   'windows': {
-                    exec {'Patching as Code - Patch Reboot':
-                      command     => '& shutdown /r /t 300 /c "Patching_as_code: Rebooting system due to a pending reboot after patching" /d p:2:17',
-                      cwd         => "${facts['puppet_vardir']}/lib/patching_as_code",
-                      onlyif      => './pending_reboot.ps1 | findstr -i True',
-                      provider    => powershell,
-                      logoutput   => true,
-                      refreshonly => true
-                    }
+                    $reboot_logic_provider = 'powershell'
+                    $reboot_logic_cmd      = '& shutdown /r /t 300 /c "Patching_as_code: Rebooting system due to a pending reboot after patching" /d p:2:17' # lint:ignore:140chars 
+                    $reboot_logic_onlyif   = "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True"
                   }
                   'linux': {
-                    exec {'Patching as Code - Patch Reboot':
-                      command     => 'shutdown -r +5',
-                      path        => '/usr/bin:/usr/sbin:/bin',
-                      cwd         => "${facts['puppet_vardir']}/lib/patching_as_code",
-                      onlyif      => '/bin/sh ./pending_reboot.sh | grep true',
-                      logoutput   => true,
-                      refreshonly => true
-                    }
+                    $reboot_logic_provider = 'posix'
+                    $reboot_logic_cmd      = '/sbin/shutdown -r +5'
+                    $reboot_logic_onlyif   = "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true"
                   }
                   default: {
-                    fail('Unsupported operating system!')
+                    fail('Unsupported operating system for Patching as Code!')
                   }
+                }
+                exec {'Patching as Code - Patch Reboot':
+                  command     => $reboot_logic_cmd,
+                  onlyif      => $reboot_logic_onlyif,
+                  provider    => $reboot_logic_provider,
+                  logoutput   => true,
+                  refreshonly => true
                 }
                 $reboot_resource = Exec['Patching as Code - Patch Reboot']
-                # Define pre-reboot execs
-                # Add pending reboot check to received pre_reboot objects
-                if $facts['kernel'].downcase == 'windows' {
-                  # Forcing provider => powershell for Windows, due to pending reboot check being Powershell-based
-                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                    exec { "Patching as Code - Before reboot - ${cmd}":
-                      *        => $cmd_opts,
-                      provider => powershell,
-                      onlyif   => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
-                      require  => Class["patching_as_code::${0}::patchday"],
-                      before   => $reboot_resource,
-                      schedule => 'Patching as Code - Patch Window',
-                      tag      => ['patching_as_code_pre_reboot']
-                    }
-                  }
-                } else {
-                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                    exec { "Patching as Code - Before reboot - ${cmd}":
-                      *        => $cmd_opts,
-                      onlyif   => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
-                      require  => Class["patching_as_code::${0}::patchday"],
-                      before   => $reboot_resource,
-                      schedule => 'Patching as Code - Patch Window',
-                      tag      => ['patching_as_code_pre_reboot']
-                    }
-                  }
-                }
               } else {
                 # Reboot as part of this Puppet run
+                case $facts['kernel'].downcase() {
+                  'windows': {
+                    $reboot_logic_provider = 'powershell'
+                    $reboot_logic_onlyif   = undef
+                  }
+                  'linux': {
+                    $reboot_logic_provider = 'posix'
+                    $reboot_logic_onlyif   = undef
+                  }
+                  default: {
+                    fail('Unsupported operating system for Patching as Code!')
+                  }
+                }
                 reboot { 'Patching as Code - Patch Reboot':
                   apply    => 'finished',
                   schedule => 'Patching as Code - Patch Window',
                   timeout  => '300'
                 }
                 $reboot_resource = Reboot['Patching as Code - Patch Reboot']
-                # Define pre-reboot execs
-                if $facts['kernel'].downcase == 'windows' {
-                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                    exec { "Patching as Code - Before reboot - ${cmd}":
-                      *        => $cmd_opts,
-                      provider => powershell,
-                      require  => Class["patching_as_code::${0}::patchday"],
-                      before   => $reboot_resource,
-                      schedule => 'Patching as Code - Patch Window',
-                      tag      => ['patching_as_code_pre_reboot']
-                    }
-                  }
-                } else {
-                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                    exec { "Patching as Code - Before reboot - ${cmd}":
-                      *        => $cmd_opts,
-                      onlyif   => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
-                      require  => Class["patching_as_code::${0}::patchday"],
-                      before   => $reboot_resource,
-                      schedule => 'Patching as Code - Patch Window',
-                      tag      => ['patching_as_code_pre_reboot']
-                    }
-                  }
-                }
               }
-              # Perform post-patching execs
+              # Perform post-patching Execs
               $post_patch_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - After patching - ${cmd}":
                   *        => $cmd_opts,
@@ -321,6 +280,18 @@ class patching_as_code(
                   schedule => 'Patching as Code - Patch Window',
                   tag      => ['patching_as_code_post_patching']
                 } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+              }
+              # Define pre-reboot Execs
+              $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                exec { "Patching as Code - Before reboot - ${cmd}":
+                  *        => $cmd_opts,
+                  provider => $reboot_logic_provider,
+                  onlyif   => $reboot_logic_onlyif,
+                  require  => Class["patching_as_code::${0}::patchday"],
+                  before   => $reboot_resource,
+                  schedule => 'Patching as Code - Patch Window',
+                  tag      => ['patching_as_code_pre_reboot']
+                }
               }
             } else {
               # Do not reboot after patching, just run post_patch commands if given
@@ -334,7 +305,7 @@ class patching_as_code(
             }
           }
           default: {
-            fail('Unsupported operating system!')
+            fail('Unsupported operating system for Patching as Code!')
           }
         }
         # }
