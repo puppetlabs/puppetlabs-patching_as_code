@@ -209,7 +209,7 @@ class patching_as_code(
             # Run pre-patch commands if provided
             $pre_patch_commands.each | $cmd, $cmd_opts | {
               exec { "Patching as Code - Before patching - ${cmd}":
-                *        => $cmd_opts,
+                *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
                 before   => Class["patching_as_code::${0}::patchday"],
                 schedule => 'Patching as Code - Patch Window',
                 tag      => ['patching_as_code_pre_patching']
@@ -274,7 +274,7 @@ class patching_as_code(
               # Perform post-patching Execs
               $post_patch_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - After patching - ${cmd}":
-                  *        => $cmd_opts,
+                  *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
                   require  => Class["patching_as_code::${0}::patchday"],
                   before   => $reboot_resource,
                   schedule => 'Patching as Code - Patch Window',
@@ -284,7 +284,7 @@ class patching_as_code(
               # Define pre-reboot Execs
               $pre_reboot_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - Before reboot - ${cmd}":
-                  *        => $cmd_opts,
+                  *        => delete($cmd_opts, ['provider', 'onlyif', 'require', 'before', 'schedule', 'tag']),
                   provider => $reboot_logic_provider,
                   onlyif   => $reboot_logic_onlyif,
                   require  => Class["patching_as_code::${0}::patchday"],
@@ -297,9 +297,10 @@ class patching_as_code(
               # Do not reboot after patching, just run post_patch commands if given
               $post_patch_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - After patching - ${cmd}":
-                  *        => $cmd_opts,
+                  *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
                   require  => Class["patching_as_code::${0}::patchday"],
-                  schedule => 'Patching as Code - Patch Window'
+                  schedule => 'Patching as Code - Patch Window',
+                  tag      => ['patching_as_code_post_patching']
                 }
               }
             }
@@ -308,7 +309,6 @@ class patching_as_code(
             fail('Unsupported operating system for Patching as Code!')
           }
         }
-        # }
       } else {
         if $facts['metered_link'] == true {
           notice("Puppet is skipping installation of patches on ${trusted['certname']} \
