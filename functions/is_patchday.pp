@@ -19,7 +19,7 @@ function patching_as_code::is_patchday(
   $som_weekday  = Integer($startofmonth.strftime('%u'))
 
   # Calculate first occurence of same weekday
-  if $day_number - $som_weekday <= 0 {
+  if $day_number - $som_weekday < 0 {
     $firstocc = 1 + 7 + $day_number - $som_weekday
   } else {
     $firstocc = 1 + $day_number - $som_weekday
