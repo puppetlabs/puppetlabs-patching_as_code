@@ -201,11 +201,6 @@ class patching_as_code(
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
-            # Reboot the node first if a reboot is already pending
-            reboot_if_pending {'Patching as Code':
-              patch_window => 'Patching as Code - Patch Window',
-              os           => $0
-            }
             # Run pre-patch commands if provided
             $pre_patch_commands.each | $cmd, $cmd_opts | {
               exec { "Patching as Code - Before patching - ${cmd}":
@@ -223,6 +218,11 @@ class patching_as_code(
               reboot_if_needed => $reboot_if_needed
             }
             if $reboot {
+              # Reboot the node first if a reboot is already pending
+              reboot_if_pending {'Patching as Code':
+                patch_window => 'Patching as Code - Patch Window',
+                os           => $0
+              }
               # Reboot after patching
               if $reboot_if_needed {
                 # Define an Exec to perform the reboot shortly after the Puppet run completes
@@ -284,7 +284,7 @@ class patching_as_code(
               # Define pre-reboot Execs
               $pre_reboot_commands.each | $cmd, $cmd_opts | {
                 exec { "Patching as Code - Before reboot - ${cmd}":
-                  *        => delete($cmd_opts, ['provider', 'onlyif', 'require', 'before', 'schedule', 'tag']),
+                  *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
                   provider => $reboot_logic_provider,
                   onlyif   => $reboot_logic_onlyif,
                   require  => Class["patching_as_code::${0}::patchday"],
