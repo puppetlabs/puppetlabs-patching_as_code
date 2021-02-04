@@ -113,7 +113,8 @@ Options:
 
 * **:command** `String`: The pre-reboot command to execute
 * **:path** `String`: The path for the command
-* **:provider** `String`: The provider for the command
+
+Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 
 ##### `use_pe_patch`
 

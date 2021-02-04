@@ -28,8 +28,8 @@ This module will leverage the fact data provided by either the [albatrossflavour
 Once available patches are known via the above facts, the module will install the patches during the configured patch window.
 * For Linux operating systems, this happens through the native Package resource.
 * For Windows operating systems, this happens through the `windows_updates::kb` class, which requires the [noma4i/windows_updates](https://forge.puppet.com/noma4i/windows_updates) module to be installed.
-* By default, a reboot is performed at the end of a patch run that actually installed patches. You can change this behavior though.
-* You can define pre-patch, post-patch and pre-reboot commands for patching runs.
+* By default, a reboot is only performed when necessary at the end of a patch run that actually installed patches. You can change this behavior though, to either always reboot or never reboot.
+* You can define pre-patch, post-patch and pre-reboot commands for patching runs. We recommend that for Windows, you use Powershell-based commands for these. Specifically for pre-reboot commands on Windows, you *must* use Powershell-based commands.
 
 ### Setup Requirements
 
@@ -51,7 +51,7 @@ or
 class {'patching_as_code':}
 ```
 This enables automatic detection of available patches, and puts all the nodes in the `primary` patch group.
-By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot.
+By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot if necessary.
 On PE 2019.8 or newer this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
 
 To allow patching_as_code to control & declare the `pe_patch` class, change the declaration to:
@@ -60,7 +60,7 @@ class {'patching_as_code':
   classify_pe_patch => true
 }
 ```
-This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter. In this scenario, make sure you do not classify your nodes with `pe_patch` via the node groups or other means.
+This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter. In this scenario, make sure you do not classify your nodes with `pe_patch` via the "PE Patch Management" node groups or other means.
 
 ## Usage
 
@@ -71,15 +71,15 @@ patching_as_code::patch_group: early
 ```
 The module provides 5 patch groups out of the box:
 ```
-testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot
-early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, performs a reboot
-primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot
-secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot
-late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot
+testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot if needed
+early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, performs a reboot if needed
+primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot if needed
+secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
+late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
 ```
 There are also 2 special built-in patch groups:
 ```
-always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot
+always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot if needed
 never:     never performs any patching and does not reboot
 ```
 
@@ -177,8 +177,8 @@ You can control additional commands that get executed at specific times, to faci
 2) Run pre-patching commands
 3) Install patches
 4) Run post-patching commands
-5) If reboots are enabled, run pre-reboot commands
-6) If reboots are enabled, reboot system
+5) If reboots are enabled, run pre-reboot commands (if a reboot is pending, or when reboots are set to `always`)
+6) If reboots are enabled, reboot system (if a reboot is pending, or when reboots are set to `always`)
 
 To define the pre/post-patching and pre-reboot commands, you need to create hashes in Hiera. The commands will be executed as `Exec` resources, and you can use any of the [allowed attributes](https://puppet.com/docs/puppet/6.17/types/exec.html#exec-attributes) for that resource (just don't use metaparameters). There are 3 hashes you can define:
 ```
@@ -202,6 +202,8 @@ patching_as_code::pre_patch_commands:
     provider: powershell
 ```
 As you can see, it's just like defining `Exec` resources.
+
+Note that specifically for `patching_as_code::pre_reboot_commands`, the `provider:`, `onlyif:` and `unless:` parameters will be ignored, as these are overwritten by the internal logic to detect pending reboots. On Linux the `provider:` is forced to `posix`, on Windows it is forced to `powershell`.
 
 ## Limitations
 

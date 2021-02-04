@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.4.0
+
+**Features**
+- Completely rewrote the reboot behavior, so that pending reboot detections fully works both before patching and after patching, in the same Puppet run. There is no more dependency on the `reboots.reboot_required` portion of the `pe_patch`/`os_patching` fact, all logic is now internal and no longer requires multiple Puppet runs.
+- Changed the default schedules to `reboot: ifneeded` (was `reboot: always`), now that the pending reboot logic has improved so much
+- Ensured that pre_reboot commands will now trigger when necessary (only one scenario can happen at a time):
+  - when an OS pending reboot is detected at the start of a run (before patching)
+  - when an OS pending reboot is detected at the end of a run (after patching)
+- Forced pre_reboot commands (which are essentially Exec resources) to use the `posix` provider on Linux and the `powershell` provider on Windows, so that the pending reboot detection logic can be injected to the resource dynamically.
+
 ## Release 0.3.0
 
 **Features**
