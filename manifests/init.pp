@@ -228,17 +228,21 @@ class patching_as_code(
                 # Use an exec to perform the reboot shortly after the Puppet run completes
                 case $facts['kernel'].downcase() {
                   'windows': {
-                    exec {'Patching as Code - Patch Reboot (if needed)':
-                      command     => file('patching_as_code/reboot_if_pending.ps1'),
+                    exec {'Patching as Code - Patch Reboot':
+                      command     => '& shutdown /r /t 300 /c "Patching_as_code: Rebooting system due to a pending reboot after patching" /d p:2:17',
+                      cwd         => "${facts['puppet_vardir']}/lib/patching_as_code",
+                      onlyif      => './pending_reboot.ps1 | findstr -i True',
                       provider    => powershell,
                       logoutput   => true,
                       refreshonly => true
                     }
                   }
                   'linux': {
-                    exec {'Patching as Code - Patch Reboot (if needed)':
-                      command     => '/bin/sh reboot_if_pending.sh',
+                    exec {'Patching as Code - Patch Reboot':
+                      command     => 'shutdown -r +5',
+                      path        => '/usr/bin:/usr/sbin:/bin',
                       cwd         => "${facts['puppet_vardir']}/lib/patching_as_code",
+                      onlyif      => '/bin/sh ./pending_reboot.sh | grep true',
                       logoutput   => true,
                       refreshonly => true
                     }
@@ -247,7 +251,34 @@ class patching_as_code(
                     fail('Unsupported operating system!')
                   }
                 }
-                $reboot_resource = Exec['Patching as Code - Patch Reboot (if needed)']
+                $reboot_resource = Exec['Patching as Code - Patch Reboot']
+                # Define pre-reboot execs
+                # Add pending reboot check to received pre_reboot objects
+                if $facts['kernel'].downcase == 'windows' {
+                  # Forcing provider => powershell for Windows, due to pending reboot check being Powershell-based
+                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                    exec { "Patching as Code - Before reboot - ${cmd}":
+                      *        => $cmd_opts,
+                      provider => powershell,
+                      onlyif   => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
+                      require  => Class["patching_as_code::${0}::patchday"],
+                      before   => $reboot_resource,
+                      schedule => 'Patching as Code - Patch Window',
+                      tag      => ['patching_as_code_pre_reboot']
+                    }
+                  }
+                } else {
+                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                    exec { "Patching as Code - Before reboot - ${cmd}":
+                      *        => $cmd_opts,
+                      onlyif   => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
+                      require  => Class["patching_as_code::${0}::patchday"],
+                      before   => $reboot_resource,
+                      schedule => 'Patching as Code - Patch Window',
+                      tag      => ['patching_as_code_pre_reboot']
+                    }
+                  }
+                }
               } else {
                 # Reboot as part of this Puppet run
                 reboot { 'Patching as Code - Patch Reboot':
@@ -256,6 +287,30 @@ class patching_as_code(
                   timeout  => '300'
                 }
                 $reboot_resource = Reboot['Patching as Code - Patch Reboot']
+                # Define pre-reboot execs
+                if $facts['kernel'].downcase == 'windows' {
+                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                    exec { "Patching as Code - Before reboot - ${cmd}":
+                      *        => $cmd_opts,
+                      provider => powershell,
+                      require  => Class["patching_as_code::${0}::patchday"],
+                      before   => $reboot_resource,
+                      schedule => 'Patching as Code - Patch Window',
+                      tag      => ['patching_as_code_pre_reboot']
+                    }
+                  }
+                } else {
+                  $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                    exec { "Patching as Code - Before reboot - ${cmd}":
+                      *        => $cmd_opts,
+                      onlyif   => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
+                      require  => Class["patching_as_code::${0}::patchday"],
+                      before   => $reboot_resource,
+                      schedule => 'Patching as Code - Patch Window',
+                      tag      => ['patching_as_code_pre_reboot']
+                    }
+                  }
+                }
               }
               # Perform post-patching execs
               $post_patch_commands.each | $cmd, $cmd_opts | {
@@ -266,16 +321,6 @@ class patching_as_code(
                   schedule => 'Patching as Code - Patch Window',
                   tag      => ['patching_as_code_post_patching']
                 } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
-              }
-              # Perform pre-reboot execs
-              $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - Before reboot - ${cmd}":
-                  *        => $cmd_opts,
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  before   => $reboot_resource,
-                  schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_pre_reboot']
-                }
               }
             } else {
               # Do not reboot after patching, just run post_patch commands if given

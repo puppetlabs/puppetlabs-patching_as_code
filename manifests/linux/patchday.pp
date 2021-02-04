@@ -40,7 +40,7 @@ class patching_as_code::linux::patchday (
 
   $fact_refresh = Exec["${patch_fact}::exec::fact"]
   $patch_reboot = $reboot_if_needed ? {
-    true  => Exec['Patching as Code - Patch Reboot (if needed)'],
+    true  => Exec['Patching as Code - Patch Reboot'],
     false => Reboot['Patching as Code - Patch Reboot']
   }
 
