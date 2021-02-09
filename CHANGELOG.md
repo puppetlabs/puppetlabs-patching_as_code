@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.4.2
+
+**Bugfixes**
+- Account for `$facts['operatingsystemmajrelease']` returning a string instead of an integer
+
 ## Release 0.4.1
 
 **Bugfixes**
