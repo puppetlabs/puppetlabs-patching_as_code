@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.4.3
+
+**Bugfixes**
+- Ensure `yum-utils` package on all RedHat/CentOS versions, not just 8
+- Use `ensure_packages()` for safer enforcement of `yum-utils` package
+
 ## Release 0.4.2
 
 **Bugfixes**
