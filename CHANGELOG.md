@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.4.1
+
+**Bugfixes**
+- For parsing the result of `/usr/bin/needs-restarting -r` in CentOS 7/8, the script was `if [ $? -eq 0 ]` instead of `if [ $? -eq 1 ]`, which caused the logic to be flipped.
+
 ## Release 0.4.0
 
 **Features**
