@@ -3,7 +3,7 @@ then
   case $(facter os.release.major) in
     7|8)
       /usr/bin/needs-restarting -r 2>/dev/null 1>/dev/null
-      if [ $? -eq 0 ]
+      if [ $? -eq 1 ]
       then
         echo "true"
       fi
