@@ -126,11 +126,9 @@ class patching_as_code(
     }
   }
 
-  # Ensure yum-utils package is installed on CentOS 8 for needs-restarting
-  if $facts['osfamily'] == 'RedHat' and $facts['operatingsystemmajrelease'] == '8' {
-    package { 'yum-utils':
-      ensure => 'present'
-    }
+  # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting util
+  if $facts['osfamily'] == 'RedHat' {
+    ensure_packages('yum-utils')
   }
 
   # Determine if today is Patch Day for this node's $patch_group
