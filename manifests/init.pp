@@ -111,7 +111,7 @@ class patching_as_code(
     content => to_json_pretty({
       patching_as_code_config => {
         'patch_group'            => $patch_group,
-        'patch_schedule'         => $patch_schedule,
+        'patch_schedule'         => $patch_schedule[$patch_group],
         'blocklist'              => $blocklist,
         'allowlist'              => $allowlist,
         'unsafe_process_list'    => $unsafe_process_list,
