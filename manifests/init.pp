@@ -127,26 +127,6 @@ class patching_as_code(
     }
   }
 
-  # Write local state file for config reporting and reuse in plans
-  file { 'patching_configuration.json':
-    ensure  => file,
-    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
-    content => to_json_pretty({
-      patching_as_code_config => {
-        'patch_group'            => $patch_group,
-        'patch_schedule'         => $patch_schedule[$patch_group],
-        'patch_fact'             => $patch_fact,
-        'blocklist'              => $blocklist,
-        'allowlist'              => $allowlist,
-        'unsafe_process_list'    => $unsafe_process_list,
-        'pre_patch_commands'     => $pre_patch_commands,
-        'post_patch_commands'    => $post_patch_commands,
-        'pre_reboot_commands'    => $pre_reboot_commands,
-        'patch_on_metered_links' => $patch_on_metered_links,
-      }
-    })
-  }
-
   # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting util
   if $facts['osfamily'] == 'RedHat' {
     ensure_packages('yum-utils')
@@ -181,6 +161,27 @@ class patching_as_code(
       }
       $_reboot = $patch_schedule[$patch_group]['reboot']
     }
+  }
+
+  # Write local state file for config reporting and reuse in plans
+  file { 'patching_configuration.json':
+    ensure  => file,
+    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
+    content => to_json_pretty({
+      patching_as_code_config => {
+        patch_group            => $patch_group,
+        patch_schedule         => $patch_schedule[$patch_group],
+        today_is_patch_day     => $bool_patch_day,
+        patch_fact             => $patch_fact,
+        blocklist              => $blocklist,
+        allowlist              => $allowlist,
+        unsafe_process_list    => $unsafe_process_list,
+        pre_patch_commands     => $pre_patch_commands,
+        post_patch_commands    => $post_patch_commands,
+        pre_reboot_commands    => $pre_reboot_commands,
+        patch_on_metered_links => $patch_on_metered_links,
+      }
+    }, false)
   }
 
   if $bool_patch_day {
