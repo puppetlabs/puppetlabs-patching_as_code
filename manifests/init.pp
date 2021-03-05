@@ -166,13 +166,12 @@ class patching_as_code(
 
   # Write local state file for config reporting and reuse in plans
   file { 'patching_configuration.json':
-    ensure  => file,
-    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
-    content => to_json_pretty({
+    ensure    => file,
+    path      => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
+    content   => to_json_pretty({
       patching_as_code_config => {
         allowlist              => $allowlist,
         blocklist              => $blocklist,
-        patch_day_is_today     => $bool_patch_day,
         patch_fact             => $patch_fact,
         patch_group            => $patch_group,
         patch_schedule         => if $patch_schedule[$patch_group] == undef { 'none' }
