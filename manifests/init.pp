@@ -104,27 +104,6 @@ class patching_as_code(
     content => $unsafe_process_list.join('\n')
   }
 
-  # Write local state file for config reporting and reuse in plans
-  file { 'patching_configuration.json':
-    ensure  => file,
-    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
-    content => to_json_pretty({
-      patching_as_code_config => {
-        'patch_group'            => $patch_group,
-        'patch_schedule'         => $patch_schedule[$patch_group],
-        'blocklist'              => $blocklist,
-        'allowlist'              => $allowlist,
-        'unsafe_process_list'    => $unsafe_process_list,
-        'pre_patch_commands'     => $pre_patch_commands,
-        'post_patch_commands'    => $post_patch_commands,
-        'pre_reboot_commands'    => $pre_reboot_commands,
-        'use_pe_patch'           => $use_pe_patch,
-        'classify_pe_patch'      => $classify_pe_patch,
-        'patch_on_metered_links' => $patch_on_metered_links,
-      }
-    })
-  }
-
   # Determine which patching module to use
   if defined('pe_patch') and $use_pe_patch {
     $pe_patch = true
@@ -146,6 +125,26 @@ class patching_as_code(
     class { 'os_patching':
       patch_window => $patch_group,
     }
+  }
+
+  # Write local state file for config reporting and reuse in plans
+  file { 'patching_configuration.json':
+    ensure  => file,
+    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
+    content => to_json_pretty({
+      patching_as_code_config => {
+        'patch_group'            => $patch_group,
+        'patch_schedule'         => $patch_schedule[$patch_group],
+        'patch_fact'             => $patch_fact,
+        'blocklist'              => $blocklist,
+        'allowlist'              => $allowlist,
+        'unsafe_process_list'    => $unsafe_process_list,
+        'pre_patch_commands'     => $pre_patch_commands,
+        'post_patch_commands'    => $post_patch_commands,
+        'pre_reboot_commands'    => $pre_reboot_commands,
+        'patch_on_metered_links' => $patch_on_metered_links,
+      }
+    })
   }
 
   # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting util
