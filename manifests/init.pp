@@ -109,17 +109,19 @@ class patching_as_code(
     ensure  => file,
     path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
     content => to_json_pretty({
-      'patch_group'            => $patch_group,
-      'patch_schedule'         => $patch_schedule,
-      'blocklist'              => $blocklist,
-      'allowlist'              => $allowlist,
-      'unsafe_process_list'    => $unsafe_process_list,
-      'pre_patch_commands'     => $pre_patch_commands,
-      'post_patch_commands'    => $post_patch_commands,
-      'pre_reboot_commands'    => $pre_reboot_commands,
-      'use_pe_patch'           => $use_pe_patch,
-      'classify_pe_patch'      => $classify_pe_patch,
-      'patch_on_metered_links' => $patch_on_metered_links,
+      patching_as_code_config => {
+        'patch_group'            => $patch_group,
+        'patch_schedule'         => $patch_schedule,
+        'blocklist'              => $blocklist,
+        'allowlist'              => $allowlist,
+        'unsafe_process_list'    => $unsafe_process_list,
+        'pre_patch_commands'     => $pre_patch_commands,
+        'post_patch_commands'    => $post_patch_commands,
+        'pre_reboot_commands'    => $pre_reboot_commands,
+        'use_pe_patch'           => $use_pe_patch,
+        'classify_pe_patch'      => $classify_pe_patch,
+        'patch_on_metered_links' => $patch_on_metered_links,
+      }
     })
   }
 
