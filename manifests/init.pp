@@ -105,8 +105,9 @@ class patching_as_code(
   }
 
   # Write local state file for config reporting and reuse in plans
-  file { "${facts['puppet_confdir']}/patching_configuration.json":
+  file { 'patching_configuration.json':
     ensure  => file,
+    path    => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
     content => to_json_pretty({
       'patch_group'            => $patch_group,
       'patch_schedule'         => $patch_schedule,
