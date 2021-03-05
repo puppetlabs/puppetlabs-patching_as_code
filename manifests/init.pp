@@ -105,9 +105,9 @@ class patching_as_code(
   }
 
   # Write local state file for config reporting and reuse in plans
-  file { "${facts['puppet_confdir']}/patching_configuration":
+  file { "${facts['puppet_confdir']}/patching_configuration.json":
     ensure  => file,
-    content => {
+    content => to_json_pretty({
       'patch_group'            => $patch_group,
       'patch_schedule'         => $patch_schedule,
       'blocklist'              => $blocklist,
@@ -119,7 +119,7 @@ class patching_as_code(
       'use_pe_patch'           => $use_pe_patch,
       'classify_pe_patch'      => $classify_pe_patch,
       'patch_on_metered_links' => $patch_on_metered_links,
-    }
+    })
   }
 
   # Determine which patching module to use
