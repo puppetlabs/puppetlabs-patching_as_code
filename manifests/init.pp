@@ -100,8 +100,9 @@ class patching_as_code(
 
   # Write local config file for unsafe processes
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
-    ensure  => file,
-    content => $unsafe_process_list.join('\n')
+    ensure    => file,
+    content   => $unsafe_process_list.join('\n'),
+    show_diff => false
   }
 
   # Determine which patching module to use
@@ -182,7 +183,8 @@ class patching_as_code(
         patch_on_metered_links => $patch_on_metered_links,
         unsafe_process_list    => $unsafe_process_list,
       }
-    }, false)
+    }, false),
+    show_diff => false
   }
 
   if $bool_patch_day {
