@@ -1,5 +1,3 @@
-# rubocop:disable Style/FrozenStringLiteralComment
-# rubocop:enable Style/FrozenStringLiteralComment
 Puppet::Type.newtype(:patch_package) do
   @doc = 'Define a package resource to patch'
 

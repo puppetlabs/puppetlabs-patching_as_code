@@ -18,7 +18,7 @@ Facter.add('patch_unsafe_process_active') do
     if processfile.exist?
       unsafe_processes = File.open(processfile, 'r').read
       unsafe_processes.each_line do |line|
-        next if line =~ %r{^#|^$}
+        next if line.match? %r{^#|^$}
         next if process_running(line.chomp) == false
         result = true
         break
