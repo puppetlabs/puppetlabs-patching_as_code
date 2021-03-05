@@ -84,7 +84,8 @@ class patching_as_code(
   Hash              $pre_reboot_commands,
   Optional[Boolean] $use_pe_patch = true,
   Optional[Boolean] $classify_pe_patch = false,
-  Optional[Boolean] $patch_on_metered_links = false
+  Optional[Boolean] $patch_on_metered_links = false,
+  Optional[Boolean] $patch_now = false
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -101,6 +102,24 @@ class patching_as_code(
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
     ensure  => file,
     content => $unsafe_process_list.join('\n')
+  }
+
+  # Write local state file for config reporting and reuse in plans
+  file { "${facts['puppet_confdir']}/patching_configuration":
+    ensure  => file,
+    content => {
+      'patch_group'            => $patch_group,
+      'patch_schedule'         => $patch_schedule,
+      'blocklist'              => $blocklist,
+      'allowlist'              => $allowlist,
+      'unsafe_process_list'    => $unsafe_process_list,
+      'pre_patch_commands'     => $pre_patch_commands,
+      'post_patch_commands'    => $post_patch_commands,
+      'pre_reboot_commands'    => $pre_reboot_commands,
+      'use_pe_patch'           => $use_pe_patch,
+      'classify_pe_patch'      => $classify_pe_patch,
+      'patch_on_metered_links' => $patch_on_metered_links,
+    }
   }
 
   # Determine which patching module to use
