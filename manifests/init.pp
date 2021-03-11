@@ -82,6 +82,7 @@ class patching_as_code(
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
+  Optional[String]  $plan_patch_fact,
   Optional[Boolean] $enable_patching = true,
   Optional[Boolean] $security_only = false,
   Optional[Boolean] $use_pe_patch = true,
@@ -173,6 +174,7 @@ class patching_as_code(
       patching_as_code_config => {
         allowlist              => $allowlist,
         blocklist              => $blocklist,
+        enable_patching        => $enable_patching,
         patch_fact             => $patch_fact,
         patch_group            => $patch_group,
         patch_schedule         => if $patch_schedule[$patch_group] == undef { 'none' }
@@ -181,9 +183,8 @@ class patching_as_code(
         pre_patch_commands     => $pre_patch_commands,
         pre_reboot_commands    => $pre_reboot_commands,
         patch_on_metered_links => $patch_on_metered_links,
+        security_only          => $security_only,
         unsafe_process_list    => $unsafe_process_list,
-        enable_patching        => $enable_patching,
-        security_only          => $security_only
       }
     }, false),
     show_diff => false
