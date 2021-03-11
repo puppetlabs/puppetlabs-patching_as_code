@@ -82,7 +82,7 @@ class patching_as_code(
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
-  Optional[String]  $plan_patch_fact,
+  Optional[String]  $plan_patch_fact = undef,
   Optional[Boolean] $enable_patching = true,
   Optional[Boolean] $security_only = false,
   Optional[Boolean] $use_pe_patch = true,
@@ -115,19 +115,23 @@ class patching_as_code(
   }
 
   # Ensure the correct patching module is used and set patch_window/patch_group
-  if $pe_patch {
-    $patch_fact = 'pe_patch'
-    if $classify_pe_patch {
-      # Only classify pe_patch if $classify_pe_patch == true
-      class { 'pe_patch':
-        patch_group => $patch_group,
+  if $plan_patch_fact == undef {
+    if $pe_patch {
+      $patch_fact = 'pe_patch'
+      if $classify_pe_patch {
+        # Only classify pe_patch if $classify_pe_patch == true
+        class { 'pe_patch':
+          patch_group => $patch_group,
+        }
+      }
+    } else {
+      $patch_fact = 'os_patching'
+      class { 'os_patching':
+        patch_window => $patch_group,
       }
     }
   } else {
-    $patch_fact = 'os_patching'
-    class { 'os_patching':
-      patch_window => $patch_group,
-    }
+    $patch_fact = $plan_patch_fact
   }
 
   # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting utility
