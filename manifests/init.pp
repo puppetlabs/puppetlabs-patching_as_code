@@ -82,10 +82,11 @@ class patching_as_code(
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
+  Optional[Boolean] $enable_patching = true,
+  Optional[Boolean] $security_only = false,
   Optional[Boolean] $use_pe_patch = true,
   Optional[Boolean] $classify_pe_patch = false,
   Optional[Boolean] $patch_on_metered_links = false,
-  Optional[Boolean] $patch_now = false
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -128,7 +129,7 @@ class patching_as_code(
     }
   }
 
-  # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting util
+  # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting utility
   if $facts['osfamily'] == 'RedHat' {
     ensure_packages('yum-utils')
   }
@@ -181,6 +182,8 @@ class patching_as_code(
         pre_reboot_commands    => $pre_reboot_commands,
         patch_on_metered_links => $patch_on_metered_links,
         unsafe_process_list    => $unsafe_process_list,
+        enable_patching        => $enable_patching,
+        security_only          => $security_only
       }
     }, false),
     show_diff => false
@@ -189,8 +192,16 @@ class patching_as_code(
   if $bool_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
-        'windows' => $facts[$patch_fact]['missing_update_kbs'],
-        'Linux'   => $facts[$patch_fact]['package_updates'],
+        'windows' =>  if $security_only == true {
+                        $facts[$patch_fact]['missing_update_kbs'] # will update to missing_security_kbs later
+                      } else {
+                        $facts[$patch_fact]['missing_update_kbs']
+                      },
+        'Linux'   =>  if $security_only == true {
+                        $facts[$patch_fact]['security_package_updates']
+                      } else {
+                        $facts[$patch_fact]['package_updates']
+                      },
         default   => []
       }
     }
@@ -219,7 +230,7 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $updates_to_install.count > 0 {
+    if ($updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
