@@ -107,7 +107,7 @@ class patching_as_code(
     show_diff => false
   }
 
-  # Determine which patching module to use
+  # Determine which patching module to use, this won't resolve when running as a plan but that's ok
   if defined('pe_patch') and $use_pe_patch {
     $pe_patch = true
   } else {
@@ -115,23 +115,39 @@ class patching_as_code(
   }
 
   # Ensure the correct patching module is used and set patch_window/patch_group
-  if $plan_patch_fact == undef {
-    if $pe_patch {
-      $patch_fact = 'pe_patch'
-      if $classify_pe_patch {
-        # Only classify pe_patch if $classify_pe_patch == true
-        class { 'pe_patch':
-          patch_group => $patch_group,
+  case $plan_patch_fact {
+    undef: {
+      # This is the base scenario, we need to select the patching module to use
+      if $pe_patch {
+        $patch_fact = 'pe_patch'
+        if $classify_pe_patch {
+          # Only classify pe_patch if $classify_pe_patch == true
+          class { 'pe_patch':
+            patch_group => $patch_group,
+          }
+        }
+      } else {
+        $patch_fact = 'os_patching'
+        class { 'os_patching':
+          patch_window => $patch_group,
         }
       }
-    } else {
+    }
+    'pe_patch': {
+      # Received the patch_fact from a plan run, use it directly
+      $patch_fact = 'pe_patch'
+      class { 'pe_patch':
+        patch_group => $patch_group,
+      }
+    }
+    'os_patching': {
+      # Received the patch_fact from a plan run, use it directly
       $patch_fact = 'os_patching'
       class { 'os_patching':
         patch_window => $patch_group,
       }
     }
-  } else {
-    $patch_fact = $plan_patch_fact
+    default: { fail('Unsupported value for plan_patch_fact parameter!') }
   }
 
   # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting utility
