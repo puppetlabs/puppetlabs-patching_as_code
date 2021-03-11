@@ -7,7 +7,7 @@ plan patching_as_code::patch_run(
 
   run_plan(puppetdb_fact, $targets)
 
-  apply($targets){
+  $result = apply($targets){
     class{'patching_as_code':
       allowlist              => $facts['patching_as_code_config']['allowlist'],
       blocklist              => $facts['patching_as_code_config']['blocklist'],
@@ -26,4 +26,6 @@ plan patching_as_code::patch_run(
       unsafe_process_list    => $facts['patching_as_code_config']['unsafe_process_list'],
     }
   }
+
+  out::message("${result}")
 }
