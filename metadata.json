@@ -1,6 +1,6 @@
 {
   "name": "puppetlabs-patching_as_code",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "author": "puppetlabs",
   "summary": "Automated patching through desired state code",
   "license": "Apache-2.0",
@@ -8,10 +8,6 @@
   "project_page": "https://github.com/puppetlabs/puppetlabs-patching_as_code",
   "issues_url": "https://github.com/puppetlabs/puppetlabs-patching_as_code/issues",
   "dependencies": [
-    {
-      "name": "noma4i/windows_updates",
-      "version_requirement": ">= 0.3.0 < 1.0.0"
-    },
     {
       "name": "puppetlabs/powershell",
       "version_requirement": ">= 3.0.1 < 5.0.0"
