@@ -1,3 +1,4 @@
+# define patching_as_code::kb
 define patching_as_code::kb (
   $ensure      = 'enabled',
   $kb          = $name,

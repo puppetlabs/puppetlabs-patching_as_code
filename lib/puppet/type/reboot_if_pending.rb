@@ -1,5 +1,3 @@
-# rubocop:disable Style/FrozenStringLiteralComment
-# rubocop:enable Style/FrozenStringLiteralComment
 Puppet::Type.newtype(:reboot_if_pending) do
   @doc = 'Perform a clean reboot if it was pending before this agent run'
 
@@ -40,7 +38,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.ps1',
       )
-      pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.downcase == 'true'
+      pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.casecmp('true').zero?
     when 'linux'
       # get the script path relative to the Puppet Type
       checker_script = File.join(
@@ -50,7 +48,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.sh',
       )
-      pending_reboot = Puppet::Util::Execution.execute("/bin/sh #{checker_script}").chomp.to_s.downcase == 'true'
+      pending_reboot = Puppet::Util::Execution.execute("/bin/sh #{checker_script}").chomp.to_s.casecmp('true').zero?
     else
       raise Puppet::Error, "Patching as Code - Unsupported Operating System type: #{kernel}"
     end
