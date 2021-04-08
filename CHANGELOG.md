@@ -9,6 +9,9 @@ All notable changes to this project will be documented in this file.
 - Adds a Task to install a Windows Update over WinRM or PCP
 - Updates the PDK to 2.0.0
 - No longer fails the resource if the Windows Update is no longer available/applicable for the node
+- Write a `patching_as_code_config` fact that reports configuration state
+- Support security-only patching via a new `security_only` parameter to the class. This works for Linux today, but requires a not-yet shipped update to `pe_patch` for Windows
+- Preparations for being able to run `patching_as_code` as a plan, not yet active.
 
 ## Release 0.4.3
 
