@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.5.0
+
+**Features**
+- Removes dependency on the `windows_updates` module, we can now install Windows Updates natively
+- Adds a Task to install a Windows Update over WinRM or PCP
+- Updates the PDK to 2.0.0
+- No longer fails the resource if the Windows Update is no longer available/applicable for the node
+
 ## Release 0.4.3
 
 **Bugfixes**
