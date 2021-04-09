@@ -116,6 +116,30 @@ Options:
 
 Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 
+##### `plan_patch_fact`
+
+Data type: `Optional[String]`
+
+Reserved parameter for running `patching_as_code` via a Plan (future functionality).
+
+Default value: `undef`
+
+##### `enable_patching`
+
+Data type: `Optional[Boolean]`
+
+Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
+
+Default value: `true`
+
+##### `security_only`
+
+Data type: `Optional[Boolean]`
+
+Install only security updates. This works for Linux today, but requires a not-yet shipped update to `pe_patch` for Windows (this setting has no effect on Windows today)
+
+Default value: `false`
+
 ##### `use_pe_patch`
 
 Data type: `Optional[Boolean]`
