@@ -27,9 +27,10 @@ This module provides automatic patch management for Linux and Windows through de
 This module will leverage the fact data provided by either the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) or PE 2019.8's builtin `pe_patch` module.
 Once available patches are known via the above facts, the module will install the patches during the configured patch window.
 * For Linux operating systems, this happens through the native Package resource.
-* For Windows operating systems, this happens through the `windows_updates::kb` class, which requires the [noma4i/windows_updates](https://forge.puppet.com/noma4i/windows_updates) module to be installed.
+* For Windows operating systems, this happens through the `patching_as_code::kb` class, which comes with this module.
 * By default, a reboot is only performed when necessary at the end of a patch run that actually installed patches. You can change this behavior though, to either always reboot or never reboot.
 * You can define pre-patch, post-patch and pre-reboot commands for patching runs. We recommend that for Windows, you use Powershell-based commands for these. Specifically for pre-reboot commands on Windows, you *must* use Powershell-based commands.
+* This module will report the configuration for each node in a `patching_as_code_config` fact
 
 ### Setup Requirements
 

@@ -82,9 +82,12 @@ class patching_as_code(
   Hash              $pre_patch_commands,
   Hash              $post_patch_commands,
   Hash              $pre_reboot_commands,
+  Optional[String]  $plan_patch_fact = undef,
+  Optional[Boolean] $enable_patching = true,
+  Optional[Boolean] $security_only = false,
   Optional[Boolean] $use_pe_patch = true,
   Optional[Boolean] $classify_pe_patch = false,
-  Optional[Boolean] $patch_on_metered_links = false
+  Optional[Boolean] $patch_on_metered_links = false,
 ) {
   # Verify the $patch_group value points to a valid patch schedule
   unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
@@ -99,11 +102,12 @@ class patching_as_code(
 
   # Write local config file for unsafe processes
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
-    ensure  => file,
-    content => $unsafe_process_list.join('\n')
+    ensure    => file,
+    content   => $unsafe_process_list.join('\n'),
+    show_diff => false
   }
 
-  # Determine which patching module to use
+  # Determine which patching module to use, this won't resolve when running as a plan but that's ok
   if defined('pe_patch') and $use_pe_patch {
     $pe_patch = true
   } else {
@@ -111,22 +115,42 @@ class patching_as_code(
   }
 
   # Ensure the correct patching module is used and set patch_window/patch_group
-  if $pe_patch {
-    $patch_fact = 'pe_patch'
-    if $classify_pe_patch {
-      # Only classify pe_patch if $classify_pe_patch == true
+  case $plan_patch_fact {
+    undef: {
+      # This is the base scenario, we need to select the patching module to use
+      if $pe_patch {
+        $patch_fact = 'pe_patch'
+        if $classify_pe_patch {
+          # Only classify pe_patch if $classify_pe_patch == true
+          class { 'pe_patch':
+            patch_group => $patch_group,
+          }
+        }
+      } else {
+        $patch_fact = 'os_patching'
+        class { 'os_patching':
+          patch_window => $patch_group,
+        }
+      }
+    }
+    'pe_patch': {
+      # Received the patch_fact from a plan run, use it directly
+      $patch_fact = 'pe_patch'
       class { 'pe_patch':
         patch_group => $patch_group,
       }
     }
-  } else {
-    $patch_fact = 'os_patching'
-    class { 'os_patching':
-      patch_window => $patch_group,
+    'os_patching': {
+      # Received the patch_fact from a plan run, use it directly
+      $patch_fact = 'os_patching'
+      class { 'os_patching':
+        patch_window => $patch_group,
+      }
     }
+    default: { fail('Unsupported value for plan_patch_fact parameter!') }
   }
 
-  # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting util
+  # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting utility
   if $facts['osfamily'] == 'RedHat' {
     ensure_packages('yum-utils')
   }
@@ -162,11 +186,47 @@ class patching_as_code(
     }
   }
 
+  # Write local state file for config reporting and reuse in plans
+  file { 'patching_configuration.json':
+    ensure    => file,
+    path      => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
+    content   => to_json_pretty({
+      patching_as_code_config => {
+        allowlist              => $allowlist,
+        blocklist              => $blocklist,
+        enable_patching        => $enable_patching,
+        patch_fact             => $patch_fact,
+        patch_group            => $patch_group,
+        patch_schedule         => if $patch_schedule[$patch_group] == undef { 'none' }
+                                  else { $patch_schedule[$patch_group] },
+        post_patch_commands    => $post_patch_commands,
+        pre_patch_commands     => $pre_patch_commands,
+        pre_reboot_commands    => $pre_reboot_commands,
+        patch_on_metered_links => $patch_on_metered_links,
+        security_only          => $security_only,
+        unsafe_process_list    => $unsafe_process_list,
+      }
+    }, false),
+    show_diff => false
+  }
+
   if $bool_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
-        'windows' => $facts[$patch_fact]['missing_update_kbs'],
-        'Linux'   => $facts[$patch_fact]['package_updates'],
+        'windows' =>  if $security_only == true {
+                        unless $facts[$patch_fact]['missing_security_kbs'].empty {
+                          $facts[$patch_fact]['missing_security_kbs']
+                        } else {
+                          $facts[$patch_fact]['missing_update_kbs']
+                        }
+                      } else {
+                        $facts[$patch_fact]['missing_update_kbs']
+                      },
+        'Linux'   =>  if $security_only == true {
+                        $facts[$patch_fact]['security_package_updates']
+                      } else {
+                        $facts[$patch_fact]['package_updates']
+                      },
         default   => []
       }
     }
@@ -195,7 +255,7 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $updates_to_install.count > 0 {
+    if ($updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {

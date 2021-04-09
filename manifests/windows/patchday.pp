@@ -19,7 +19,7 @@ class patching_as_code::windows::patchday (
       true  => [ $fact_refresh, $patch_reboot ],
       false => [ $fact_refresh ]
     }
-    windows_updates::kb { $kb:
+    patching_as_code::kb { $kb:
       ensure      => 'present',
       maintwindow => 'Patching as Code - Patch Window',
       notify      => $triggers
