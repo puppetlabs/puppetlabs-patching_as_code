@@ -214,7 +214,11 @@ class patching_as_code(
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
         'windows' =>  if $security_only == true {
-                        $facts[$patch_fact]['missing_update_kbs'] # will update to missing_security_kbs later
+                        unless $facts[$patch_fact]['missing_security_kbs'].empty {
+                          $facts[$patch_fact]['missing_security_kbs']
+                        } else {
+                          $facts[$patch_fact]['missing_update_kbs']
+                        }
                       } else {
                         $facts[$patch_fact]['missing_update_kbs']
                       },
