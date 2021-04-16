@@ -43,9 +43,10 @@ The following parameters are available in the `patching_as_code` class.
 
 ##### `patch_group`
 
-Data type: `String`
+Data type: `Variant[String,Array[String]]`
 
-Name of the patch_group for this node. Must match one of the patch groups in $patch_schedule
+Name(s) of the patch_group(s) for this node. Must match one or more of the patch groups in $patch_schedule
+To assign multiple patch groups, provide this parameter as an array
 
 ##### `patch_schedule`
 
@@ -56,7 +57,7 @@ Hash of available patch_schedules. Default schedules are in /data/common.yaml of
 Options:
 
 * **:day_of_week** `String`: Day of the week to patch, valid options: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-* **:count_of_week** `Integer`: Which week in the month to patch, use a number between 1 and 4
+* **:count_of_week** `Variant[Integer,Array[Integer]]`: Which week(s) in the month to patch, use number(s) between 1 and 5
 * **:hours** `String`: Which hours on patch day to patch, define a range as 'HH:MM - HH:MM'
 * **:max_runs** `String`: How many Puppet runs during the patch window can Puppet install patches. Must be at least 1.
 * **:reboot** `String`: Reboot behavior, valid options: 'always', 'never', 'ifneeded'

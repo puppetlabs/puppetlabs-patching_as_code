@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.6.0
+
+**Features**
+- Adds support for providing an array of values to the `patch_group` attribute of the `patching_as_code` class
+- Adds support for providing an array of values to the `count_of_week` parameter in a patch schedule
+
 ## Release 0.5.0
 
 **Features**

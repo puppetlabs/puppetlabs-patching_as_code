@@ -1,6 +1,6 @@
 function patching_as_code::is_patchday(
   Enum['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
-  Integer $week_iteration
+  Variant[Integer, Array] $week_iteration
 ){
   $day_number = $day_of_week ? {
     'Monday'    => 1,
@@ -25,11 +25,21 @@ function patching_as_code::is_patchday(
     $firstocc = 1 + $day_number - $som_weekday
   }
 
-  # Calculate date of patch day
-  $patchday = $firstocc + (( $week_iteration - 1 ) * 7 )
+  # Calculate dates of valid patch days
+  case type($week_iteration, 'generalized') {
+    Type[Integer]: {
+      $patchdays = Array($firstocc + (( $week_iteration - 1 ) * 7 ), true)
+    }
+    Type[Array[Integer]]: {
+      $patchdays = $week_iteration.map |$week| { $firstocc + (( $week - 1 ) * 7 ) }
+    }
+    default: {
+      fail('The count_of_week parameter of the patch_schedule must be configured as an integer or an array of integers!')
+    }
+  }
 
-  # Return true if today is patch day
-  if $patchday == $dayofmonth {
+  # Return true if today is a patch day
+  if $dayofmonth in $patchdays {
     true
   } else {
     false
