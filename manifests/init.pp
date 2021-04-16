@@ -16,13 +16,13 @@
 # 
 # @param Variant[String,Array[String]] patch_group
 #   Name(s) of the patch_group(s) for this node. Must match one or more of the patch groups in $patch_schedule
-#   To set multiple patch groups, provide this parameter as an array
+#   To assign multiple patch groups, provide this parameter as an array
 # @param [Hash] patch_schedule
 #   Hash of available patch_schedules. Default schedules are in /data/common.yaml of this module
 # @option patch_schedule [String] :day_of_week
 #   Day of the week to patch, valid options: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-# @option patch_schedule [Integer] :count_of_week
-#   Which week in the month to patch, use a number between 1 and 4
+# @option patch_schedule [Variant[Integer,Array[Integer]]] :count_of_week
+#   Which week(s) in the month to patch, use number(s) between 1 and 5
 # @option patch_schedule [String] :hours
 #   Which hours on patch day to patch, define a range as 'HH:MM - HH:MM'
 # @option patch_schedule [String] :max_runs
