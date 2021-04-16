@@ -14,8 +14,9 @@
 #     use_pe_patch => false
 #   }
 # 
-# @param [String] patch_group
-#   Name of the patch_group for this node. Must match one of the patch groups in $patch_schedule
+# @param Variant[String,Array[String]] patch_group
+#   Name(s) of the patch_group(s) for this node. Must match one or more of the patch groups in $patch_schedule
+#   To set multiple patch groups, provide this parameter as an array
 # @param [Hash] patch_schedule
 #   Hash of available patch_schedules. Default schedules are in /data/common.yaml of this module
 # @option patch_schedule [String] :day_of_week
@@ -74,25 +75,30 @@
 #   When disabled (default), patches are not installed over a metered link.
 # 
 class patching_as_code(
-  String            $patch_group,
-  Hash              $patch_schedule,
-  Array             $blocklist,
-  Array             $allowlist,
-  Array             $unsafe_process_list,
-  Hash              $pre_patch_commands,
-  Hash              $post_patch_commands,
-  Hash              $pre_reboot_commands,
-  Optional[String]  $plan_patch_fact = undef,
-  Optional[Boolean] $enable_patching = true,
-  Optional[Boolean] $security_only = false,
-  Optional[Boolean] $use_pe_patch = true,
-  Optional[Boolean] $classify_pe_patch = false,
-  Optional[Boolean] $patch_on_metered_links = false,
+  Variant[String,Array[String]] $patch_group,
+  Hash                          $patch_schedule,
+  Array                         $blocklist,
+  Array                         $allowlist,
+  Array                         $unsafe_process_list,
+  Hash                          $pre_patch_commands,
+  Hash                          $post_patch_commands,
+  Hash                          $pre_reboot_commands,
+  Optional[String]              $plan_patch_fact = undef,
+  Optional[Boolean]             $enable_patching = true,
+  Optional[Boolean]             $security_only = false,
+  Optional[Boolean]             $use_pe_patch = true,
+  Optional[Boolean]             $classify_pe_patch = false,
+  Optional[Boolean]             $patch_on_metered_links = false,
 ) {
-  # Verify the $patch_group value points to a valid patch schedule
-  unless $patch_schedule[$patch_group] or $patch_group in ['always', 'never'] {
-    fail("Patch group ${patch_group} is not valid as no associated schedule was found!
-    Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+  # Ensure we work with a $patch_groups array for further processing
+  $patch_groups = Array($patch_group, true)
+
+  # Verify if all of $patch_groups point to a valid patch schedule
+  $patch_groups.each |$pg| {
+    unless $patch_schedule[$pg] or $pg in ['always', 'never'] {
+      fail("Patch group ${pg} is not valid as no associated schedule was found!
+      Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+    }
   }
 
   # Verify the puppet_confdir from the puppetlabs/puppet_agent module is present
@@ -123,13 +129,13 @@ class patching_as_code(
         if $classify_pe_patch {
           # Only classify pe_patch if $classify_pe_patch == true
           class { 'pe_patch':
-            patch_group => $patch_group,
+            patch_group => join($patch_groups, ' '),
           }
         }
       } else {
         $patch_fact = 'os_patching'
         class { 'os_patching':
-          patch_window => $patch_group,
+          patch_window => join($patch_groups, ' '),
         }
       }
     }
@@ -137,14 +143,14 @@ class patching_as_code(
       # Received the patch_fact from a plan run, use it directly
       $patch_fact = 'pe_patch'
       class { 'pe_patch':
-        patch_group => $patch_group,
+        patch_group => join($patch_groups, ' '),
       }
     }
     'os_patching': {
       # Received the patch_fact from a plan run, use it directly
       $patch_fact = 'os_patching'
       class { 'os_patching':
-        patch_window => $patch_group,
+        patch_window => join($patch_groups, ' '),
       }
     }
     default: { fail('Unsupported value for plan_patch_fact parameter!') }
@@ -155,34 +161,46 @@ class patching_as_code(
     ensure_packages('yum-utils')
   }
 
-  # Determine if today is Patch Day for this node's $patch_group
-  case $patch_group {
-    'always': {
-      $bool_patch_day = true
-      schedule { 'Patching as Code - Patch Window':
-        range  => '00:00 - 23:59',
-        repeat => 1440
-      }
-      $_reboot = 'ifneeded'
+  # Determine if today is Patch Day for this node's $patch_groups
+  if 'never' in $patch_groups {
+    $bool_patch_day = false
+    schedule { 'Patching as Code - Patch Window':
+      period => 'never',
     }
-    'never': {
-      $bool_patch_day = false
-      schedule { 'Patching as Code - Patch Window':
-        period => 'never',
-      }
-      $_reboot = 'never'
+    $_reboot = 'never'
+    $active_pg = 'never'
+  } elsif 'always' in $patch_groups {
+    $bool_patch_day = true
+    schedule { 'Patching as Code - Patch Window':
+      range  => '00:00 - 23:59',
+      repeat => 1440
     }
-    default: {
-      $bool_patch_day = patching_as_code::is_patchday(
-        $patch_schedule[$patch_group]['day_of_week'],
-        $patch_schedule[$patch_group]['count_of_week']
-      )
-      schedule { 'Patching as Code - Patch Window':
-        range   => $patch_schedule[$patch_group]['hours'],
-        weekday => $patch_schedule[$patch_group]['day_of_week'],
-        repeat  => $patch_schedule[$patch_group]['max_runs']
+    $_reboot = 'ifneeded'
+    $active_pg = 'always'
+  } else {
+    $pg_info = $patch_groups.map |$pg| {
+      {
+        'name'         => $pg,
+        'is_patch_day' => patching_as_code::is_patchday(
+                            $patch_schedule[$pg]['day_of_week'],
+                            $patch_schedule[$pg]['count_of_week']
+                          )
       }
-      $_reboot = $patch_schedule[$patch_group]['reboot']
+    }
+    $active_pg = $pg_info.reduce(undef) |$memo, $value| {
+      if $value['is_patch_day'] == true { $value['name'] } else { $memo }
+    }
+    $bool_patch_day = type($active_pg,'generalized') ? {
+      Type[String] => true,
+      default => false
+    }
+    if $bool_patch_day {
+      schedule { 'Patching as Code - Patch Window':
+        range   => $patch_schedule[$active_pg]['hours'],
+        weekday => $patch_schedule[$active_pg]['day_of_week'],
+        repeat  => $patch_schedule[$active_pg]['max_runs']
+      }
+      $_reboot = $patch_schedule[$active_pg]['reboot']
     }
   }
 
@@ -196,9 +214,12 @@ class patching_as_code(
         blocklist              => $blocklist,
         enable_patching        => $enable_patching,
         patch_fact             => $patch_fact,
-        patch_group            => $patch_group,
-        patch_schedule         => if $patch_schedule[$patch_group] == undef { 'none' }
-                                  else { $patch_schedule[$patch_group] },
+        patch_group            => $patch_groups,
+        patch_schedule         => if $active_pg in ['always', 'never'] {
+                                    { $active_pg => 'N/A' }
+                                  } else {
+                                    $patch_schedule.filter |$item| { $item[0] in $patch_groups }
+                                  },
         post_patch_commands    => $post_patch_commands,
         pre_patch_commands     => $pre_patch_commands,
         pre_reboot_commands    => $pre_reboot_commands,
