@@ -65,13 +65,14 @@ This will change the behavior to also declare the `pe_patch` class, and match it
 
 ## Usage
 
-To control which patch group a node belongs to, you need to set the `patch_group` parameter of the class.
+To control which patch group(s) a node belongs to, you need to set the `patch_group` parameter of the class.
 It is highly recommended to use Hiera to set the correct value for each node, for example:
 ```
 patching_as_code::patch_group: early
 ```
-The module provides 5 patch groups out of the box:
+The module provides 6 patch groups out of the box:
 ```
+weekly:    patches each Thursday of the month, between 09:00 and 11:00, performs a reboot if needed
 testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot if needed
 early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, performs a reboot if needed
 primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot if needed
@@ -82,6 +83,17 @@ There are also 2 special built-in patch groups:
 ```
 always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot if needed
 never:     never performs any patching and does not reboot
+```
+
+If you want to assign a node to multiple patch groups, specify an array of values in Hiera:
+```
+patching_as_code::patch_group:
+  - testing
+  - early
+```
+or, in flow style:
+```
+patching_as_code::patch_group: [ testing, early ]
 ```
 
 ### Customizing the patch groups
@@ -101,7 +113,7 @@ patching_as_code::patch_schedule:
 For example, say you want to have the following 2 patch groups:
 ```
 group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time, reboots if needed
-group2: patches every 3nd Monday of the month, between 20:00 and 22:00, max 3 times, does not reboot
+group2: patches every 3nd and 4th Monday of the month, between 20:00 and 22:00, max 3 times, does not reboot
 ```
 then define the hash as follows:
 ```
@@ -114,7 +126,7 @@ patching_as_code::patch_schedule:
     reboot: ifneeded
   group2:
     day_of_week: Monday
-    count_of_week: 3
+    count_of_week: [3,4]
     hours: 20:00 - 22:00
     max_runs: 3
     reboot: never
