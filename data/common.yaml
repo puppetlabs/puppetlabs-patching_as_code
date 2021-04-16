@@ -3,12 +3,7 @@ patching_as_code::patch_group: primary
 patching_as_code::patch_schedule:
   weekly:
     day_of_week: Thursday
-    count_of_week:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
+    count_of_week: [1,2,3,4,5]
     hours: 09:00 - 11:00
     max_runs: 4
     reboot: ifneeded
