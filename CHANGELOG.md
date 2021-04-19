@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## Release 0.6.1
+
+**Bugfixes**
+- Removed the `weekday` attribute of the `schedule` resource that this module uses internally to restrict when patches can be applied. In certain edge cases where the Puppet server is in a very different timezone from a managed node, there can be a 1 day date difference between the two systems. This creates a scenario where the node never receives a valid patch schedule. By removing the `weekday` parameter from the `schedule` resource, this can no longer occur. Other logic still protects the actual day on which the patching is allowed so this parameter wasn't necessary.
+
 ## Release 0.6.0
 
 **Features**

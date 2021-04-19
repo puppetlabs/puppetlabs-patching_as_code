@@ -196,9 +196,8 @@ class patching_as_code(
     }
     if $bool_patch_day {
       schedule { 'Patching as Code - Patch Window':
-        range   => $patch_schedule[$active_pg]['hours'],
-        weekday => $patch_schedule[$active_pg]['day_of_week'],
-        repeat  => $patch_schedule[$active_pg]['max_runs']
+        range  => $patch_schedule[$active_pg]['hours'],
+        repeat => $patch_schedule[$active_pg]['max_runs']
       }
       $_reboot = $patch_schedule[$active_pg]['reboot']
     }
