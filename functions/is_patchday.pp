@@ -1,8 +1,16 @@
 function patching_as_code::is_patchday(
-  Enum['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
+  Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
   Variant[Integer, Array] $week_iteration
 ){
+  $timestamp    = Timestamp()
+  $year         = $timestamp.strftime('%Y')
+  $month        = $timestamp.strftime('%m')
+  $weekday      = Integer($timestamp.strftime('%u'))
+  $dayofmonth   = Integer($timestamp.strftime('%e'))
+  $startofmonth = Timestamp("${year}-${month}-01", '%Y-%m-%e')
+  $som_weekday  = Integer($startofmonth.strftime('%u'))
   $day_number = $day_of_week ? {
+    'Any'       => $weekday,
     'Monday'    => 1,
     'Tuesday'   => 2,
     'Wednesday' => 3,
@@ -11,12 +19,6 @@ function patching_as_code::is_patchday(
     'Saturday'  => 6,
     'Sunday'    => 7
   }
-  $timestamp    = Timestamp()
-  $year         = $timestamp.strftime('%Y')
-  $month        = $timestamp.strftime('%m')
-  $dayofmonth   = Integer($timestamp.strftime('%e'))
-  $startofmonth = Timestamp("${year}-${month}-01", '%Y-%m-%e')
-  $som_weekday  = Integer($startofmonth.strftime('%u'))
 
   # Calculate first occurence of same weekday
   if $day_number - $som_weekday < 0 {

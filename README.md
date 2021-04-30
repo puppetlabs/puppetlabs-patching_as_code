@@ -116,6 +116,8 @@ For example, say you want to have the following 2 patch groups:
 ```
 group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time, reboots if needed
 group2: patches every 3nd and 4th Monday of the month, between 20:00 and 22:00, max 3 times, does not reboot
+group3: patches every day in the 3rd week of the month, between 18:00 and 20:00, max 4 times, always reboots
+
 ```
 then define the hash as follows:
 ```
@@ -132,6 +134,12 @@ patching_as_code::patch_schedule:
     hours: 20:00 - 22:00
     max_runs: 3
     reboot: never
+  group3:
+    day_of_week: Any
+    count_of_week: 3
+    hours: 18:00 - 20:00
+    max_runs: 4
+    reboot: always
 ```
 
 ## Controlling which patches get installed

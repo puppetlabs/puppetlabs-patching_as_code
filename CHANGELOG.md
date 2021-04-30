@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.6.2
+
+**Features**
+- Adds support for setting the value `Any` to the `day_of_week` parameter in a patch schedule
 
 ## Release 0.6.1
 
