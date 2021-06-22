@@ -34,12 +34,14 @@ class patching_as_code::linux::patchday (
     path     => $cmd_path,
     schedule => 'Patching as Code - Patch Window'
   } -> anchor {'patching_as_code::patchday::start':
-  } -> anchor {'patching_as_code::patchday::end':}
+  } -> anchor {'patching_as_code::patchday::end':
+    notify => Exec["${patch_fact}::exec::fact"]
+  }
 
   $updates.each | $package | {
     patch_package { $package:
       patch_window => 'Patching as Code - Patch Window',
-      triggers     => [ Exec["${patch_fact}::exec::fact"] ]
+      triggers     => []
     }
   }
 }
