@@ -4,8 +4,6 @@
 class patching_as_code::linux::patchday (
   Array   $updates,
   String  $patch_fact,
-  Boolean $reboot,
-  Boolean $reboot_if_needed
 ) {
 
   case $facts['package_provider'] {
@@ -38,20 +36,10 @@ class patching_as_code::linux::patchday (
   } -> anchor {'patching_as_code::patchday::start':
   } -> anchor {'patching_as_code::patchday::end':}
 
-  $fact_refresh = Exec["${patch_fact}::exec::fact"]
-  $patch_reboot = $reboot_if_needed ? {
-    true  => Exec['Patching as Code - Patch Reboot'],
-    false => Reboot['Patching as Code - Patch Reboot']
-  }
-
   $updates.each | $package | {
-    $triggers = $reboot ? {
-      true  => [ $fact_refresh, $patch_reboot ],
-      false => [ $fact_refresh ]
-    }
     patch_package { $package:
       patch_window => 'Patching as Code - Patch Window',
-      triggers     => $triggers
+      triggers     => [ Exec["${patch_fact}::exec::fact"] ]
     }
   }
 }
