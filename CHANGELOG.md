@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.0
+
+**Features**
+- Moves the post-patch reboot logic to its own stage (`patch_reboot`), which runs after the `main` stage. This should ensure that reboots only happen at the end of the Puppet run.
+- Removed the `notify` logic for triggering the reboots from installed patches, in favor of handling the reboot logic in the new `patch_reboot` stage.
+- Deduplicated the calling of the Exec resource that refreshes the patch fact, ensuring this only happens once now.
+
 ## Release 0.6.2
 
 **Features**
