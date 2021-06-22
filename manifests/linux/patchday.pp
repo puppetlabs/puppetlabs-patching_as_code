@@ -36,7 +36,8 @@ class patching_as_code::linux::patchday (
   } -> anchor {'patching_as_code::patchday::start':
   } -> anchor {'patching_as_code::patchday::end':
   } -> notify {'Patching as Code - Update Fact':
-    notify => Exec["${patch_fact}::exec::fact"]
+    message => "Patches installed, refreshing ${patch_fact} fact...",
+    notify  => Exec["${patch_fact}::exec::fact"]
   }
 
   $updates.each | $package | {
