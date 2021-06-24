@@ -296,6 +296,9 @@ class patching_as_code(
             class { "patching_as_code::${0}::patchday":
               updates    => $updates_to_install,
               patch_fact => $patch_fact,
+            } -> notify {'Patching as Code - Update Fact':
+              message => "Patches installed, refreshing ${patch_fact} fact...",
+              notify  => Exec["${patch_fact}::exec::fact"]
             }
             if $reboot {
               # Reboot the node first if a reboot is already pending

@@ -29,9 +29,7 @@ Puppet::Type.newtype(:patch_package) do
     return if package_in_catalog
     [Puppet::Type.type(:package).new(name: name,
                                     ensure: 'latest',
-                                    schedule: self[:patch_window],
-                                    before: 'Anchor[patching_as_code::patchday::end]',
-                                    require: 'Anchor[patching_as_code::patchday::start]')]
+                                    schedule: self[:patch_window])]
   end
 
   # See if the package to patch exists in the catalog
@@ -50,8 +48,6 @@ Puppet::Type.newtype(:patch_package) do
         Puppet.send('notice', "#{package_res} (managed) will be updated by Patching_as_code")
         catalog.resource(package_res)['ensure'] = 'latest'
         catalog.resource(package_res)['schedule'] = self[:patch_window]
-        catalog.resource(package_res)['before'] = Array(catalog.resource(package_res)['before']) + ['Anchor[patching_as_code::patchday::end]']
-        catalog.resource(package_res)['require'] = Array(catalog.resource(package_res)['require']) + ['Anchor[patching_as_code::patchday::start]']
       else
         Puppet.send('notice', "#{package_res} (managed) will not be updated by Patching_as_code, due to the package enforcing a specific version")
       end
