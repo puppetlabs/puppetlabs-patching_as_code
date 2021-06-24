@@ -42,8 +42,7 @@ class patching_as_code::linux::patchday (
 
   $updates.each | $package | {
     patch_package { $package:
-      patch_window => 'Patching as Code - Patch Window',
-      triggers     => []
+      patch_window => 'Patching as Code - Patch Window'
     }
   }
 }
