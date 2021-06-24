@@ -26,16 +26,19 @@ Puppet::Type.newtype(:patch_package) do
     rescue ArgumentError
       package_in_catalog = false
     end
-    return if package_in_catalog
-    [Puppet::Type.type(:package).new(name: name,
-                                    ensure: 'latest',
-                                    schedule: self[:patch_window])]
+    if package_in_catalog
+      []
+    else
+      [Puppet::Type.type(:package).new(name: name,
+                                       ensure: 'latest',
+                                       schedule: self[:patch_window])]
+    end
   end
 
   # See if the package to patch exists in the catalog
   # If package is found, update resource one-time for patching
   def pre_run_check
-    package_res = "Package[#{self[:name]}]"
+    package_res = "Package[#{name}]"
     begin
       res = retrieve_resource_reference(package_res)
       package_in_catalog = true
