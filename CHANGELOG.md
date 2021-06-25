@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.1
+
+**Improvements**
+- Adopted the `eval_generate` function in the `patch_package` type to ensure that newly generated `package` resources become children of the `patching_as_code::linux::patchday` class. This provides better context for these package resources, which can be leveraged in external reporting tools (e.g. Splunk).
+- Simplified the `patch_package` type, removed capabilities that are no longer needed
+- Moved the logic to trigger the patch fact refresh to the main manifest
+- Simplified the patchday classes
+
 ## Release 0.7.0
 
 **Features**

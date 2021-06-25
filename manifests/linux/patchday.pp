@@ -33,17 +33,14 @@ class patching_as_code::linux::patchday (
     command  => $cmd,
     path     => $cmd_path,
     schedule => 'Patching as Code - Patch Window'
-  } -> anchor {'patching_as_code::patchday::start':
-  } -> anchor {'patching_as_code::patchday::end':
-  } -> notify {'Patching as Code - Update Fact':
-    message => "Patches installed, refreshing ${patch_fact} fact...",
-    notify  => Exec["${patch_fact}::exec::fact"]
   }
 
   $updates.each | $package | {
     patch_package { $package:
       patch_window => 'Patching as Code - Patch Window',
-      triggers     => []
+      require      => Exec['Patching as Code - Clean Cache']
     }
   }
+
+  anchor {'patching_as_code::patchday::end':}
 }
