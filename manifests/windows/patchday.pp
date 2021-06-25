@@ -12,4 +12,6 @@ class patching_as_code::windows::patchday (
       maintwindow => 'Patching as Code - Patch Window'
     }
   }
+
+  anchor {'patching_as_code::patchday::end':}
 }

@@ -41,4 +41,6 @@ class patching_as_code::linux::patchday (
       require      => Exec['Patching as Code - Clean Cache']
     }
   }
+
+  anchor {'patching_as_code::patchday::end':}
 }
