@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.2
+
+**Improvements**
+- The pre-patch reboot in case of any pending reboots now happens also if it is patchday but there are no patches to install. This facilitates parallel patching tools to have installed patches before Puppet's patch window, with Puppet performing the actual reboot.
+
 ## Release 0.7.1
 
 **Improvements**
