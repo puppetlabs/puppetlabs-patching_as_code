@@ -292,6 +292,7 @@ class patching_as_code(
         }
       }
     }
+    anchor {'patching_as_code::start':}
 
     if ($updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
@@ -310,6 +311,7 @@ class patching_as_code(
             class { "patching_as_code::${0}::patchday":
               updates    => $updates_to_install,
               patch_fact => $patch_fact,
+              require    => Anchor['patching_as_code::start']
             }
             if $reboot {
               # Reboot after patching (in later patch_reboot stage)
