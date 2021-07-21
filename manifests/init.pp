@@ -278,6 +278,21 @@ class patching_as_code(
       'ifneeded': {true}
       default:    {false}
     }
+    if $reboot {
+      # Reboot the node first if a reboot is already pending
+      case $facts['kernel'].downcase() {
+        /(windows|linux)/: {
+          reboot_if_pending {'Patching as Code':
+            patch_window => 'Patching as Code - Patch Window',
+            os           => $0
+          }
+        }
+        default: {
+          fail('Unsupported operating system for Patching as Code!')
+        }
+      }
+    }
+    anchor {'patching_as_code::start':}
 
     if ($updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
@@ -296,16 +311,12 @@ class patching_as_code(
             class { "patching_as_code::${0}::patchday":
               updates    => $updates_to_install,
               patch_fact => $patch_fact,
+              require    => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
               message => "Patches installed, refreshing ${patch_fact} fact...",
               notify  => Exec["${patch_fact}::exec::fact"]
             }
             if $reboot {
-              # Reboot the node first if a reboot is already pending
-              reboot_if_pending {'Patching as Code':
-                patch_window => 'Patching as Code - Patch Window',
-                os           => $0
-              }
               # Reboot after patching (in later patch_reboot stage)
               class { 'patching_as_code::reboot':
                 reboot_if_needed => $reboot_if_needed,
