@@ -90,7 +90,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            title: 'Patching as Code - Pending OS reboot',
                            apply: 'immediately',
                            schedule: parameter(:patch_window).value,
-                           before: "Class[patching_as_code::#{kernel}::patchday]",
+                           before: 'Anchor[patching_as_code::start]',
                            require: pre_reboot_resources,
                          ))
 
@@ -98,7 +98,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
                            title: 'Patching as Code - Performing Pending OS reboot before patching...',
                            schedule: parameter(:patch_window).value,
                            notify: 'Reboot[Patching as Code - Pending OS reboot]',
-                           before: "Class[patching_as_code::#{kernel}::patchday]",
+                           before: 'Anchor[patching_as_code::start]',
                            require: pre_reboot_resources,
                          ))
   end
