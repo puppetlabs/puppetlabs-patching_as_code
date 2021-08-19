@@ -20,12 +20,12 @@ Puppet::Type.newtype(:patch_package) do
   # See if the package to patch exists in the catalog
   # If package is not found, create a one-time package resource
   def eval_generate
-    if retrieve_package_title(name).empty?
-      package_in_catalog = false
-    else
-      package_in_catalog = true
-    end
-    
+    package_in_catalog = if retrieve_package_title(name).empty?
+                           false
+                         else
+                           true
+                         end
+
     if package_in_catalog
       []
     else
