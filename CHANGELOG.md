@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.3
+
+**Bugfixes**
+- Correctly handles package declarations where the title of the package resource does not match the name of the package.
+
 ## Release 0.7.2
 
 **Improvements**
