@@ -53,6 +53,7 @@ Puppet::Type.newtype(:patch_package) do
         catalog.resource(package_res)['ensure'] = 'latest'
         catalog.resource(package_res)['schedule'] = self[:patch_window]
         catalog.resource(package_res)['before'] = Array(res['before']) + ['Anchor[patching_as_code::patchday::end]']
+        catalog.resource(package_res)['require'] = Array(res['require']) + ['Exec[Patching as Code - Clean Cache]']
       else
         Puppet.send('notice', "Package[#{name}] (managed) will not be updated by Patching_as_code, due to the package enforcing a specific version")
       end
