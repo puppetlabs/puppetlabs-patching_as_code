@@ -313,8 +313,9 @@ class patching_as_code(
               patch_fact => $patch_fact,
               require    => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
-              message => "Patches installed, refreshing ${patch_fact} fact...",
-              notify  => Exec["${patch_fact}::exec::fact"]
+              message  => "Patches installed, refreshing ${patch_fact} fact...",
+              notify   => Exec["${patch_fact}::exec::fact"],
+              schedule => 'Patching as Code - Patch Window',
             }
             if $reboot {
               # Reboot after patching (in later patch_reboot stage)
