@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.4
+
+**Bugfixes**
+- Fixes a missing `schedule` metaparameter for the `Notify[Patching as Code - Update Fact]`, which would cause the `pe_patch` fact to update at every Puppet run during the patch day, instead of only during the maintenance window.
+
 ## Release 0.7.3
 
 **Bugfixes**
