@@ -4,9 +4,8 @@ function patching_as_code::is_patchday(
 ){
   $srv_utc_time   = Timestamp()
   $node_offset    = $facts['patching_as_code_utc_offset']
-  notice("Node offset is: ${node_offset}")
   $node_timestamp = $srv_utc_time + ($node_offset * 3600)
-  notice("Node time calcuted to be: ${node_timestamp}")
+  notice("Patching_as_code - Node timestamp calculated as: ${node_timestamp}")
   $year           = $node_timestamp.strftime('%Y')
   $month          = $node_timestamp.strftime('%m')
   $weekday        = Integer($node_timestamp.strftime('%u'))
@@ -46,10 +45,10 @@ function patching_as_code::is_patchday(
 
   # Return true if today is a patch day
   if $dayofmonth in $patchdays {
-    notice("Today is patch day for node ${trusted['certname']}")
+    notice("Patching_as_code - Today is patch day for node ${trusted['certname']}")
     true
   } else {
-    notice("Today is NOT patch day for node ${trusted['certname']}")
+    notice("Patching_as_code - Today is NOT patch day for node ${trusted['certname']}")
     false
   }
 
