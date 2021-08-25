@@ -3,7 +3,10 @@ function patching_as_code::is_patchday(
   Variant[Integer, Array] $week_iteration
 ){
   $srv_utc_time   = Timestamp()
-  $node_offset    = $facts['patching_as_code_utc_offset']
+  $node_offset    = $facts['patching_as_code_utc_offset'].empty ? {
+                      true  => 0,
+                      false => $facts['patching_as_code_utc_offset']
+                    }
   $node_timestamp = $srv_utc_time + ($node_offset * 3600)
   notice("Patching_as_code - Node timestamp calculated as: ${node_timestamp}")
   $year           = $node_timestamp.strftime('%Y')

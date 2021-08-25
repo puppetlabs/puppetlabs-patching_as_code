@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.6
+
+**Bugfixes**
+- Account for the `patching_as_code_utc_offset` fact to be empty in some situations
+
 ## Release 0.7.5
 
 **Improvements**
