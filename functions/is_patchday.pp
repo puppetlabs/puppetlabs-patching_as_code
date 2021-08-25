@@ -2,14 +2,18 @@ function patching_as_code::is_patchday(
   Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
   Variant[Integer, Array] $week_iteration
 ){
-  $timestamp    = Timestamp()
-  $year         = $timestamp.strftime('%Y')
-  $month        = $timestamp.strftime('%m')
-  $weekday      = Integer($timestamp.strftime('%u'))
-  $dayofmonth   = Integer($timestamp.strftime('%e'))
-  $startofmonth = Timestamp("${year}-${month}-01", '%Y-%m-%e')
-  $som_weekday  = Integer($startofmonth.strftime('%u'))
-  $day_number = $day_of_week ? {
+  $srv_timestamp  = Timestamp()
+  $srv_utc_offset = patching_as_code::get_srv_utc_offset()
+  $node_offset    = $facts['patching_as_code_utc_offset']
+  $timezone_diff  = $node_offset - $srv_utc_offset
+  $node_timestamp = $srv_timestamp + ($timezone_diff * 3600)
+  $year           = $node_timestamp.strftime('%Y')
+  $month          = $node_timestamp.strftime('%m')
+  $weekday        = Integer($node_timestamp.strftime('%u'))
+  $dayofmonth     = Integer($node_timestamp.strftime('%e'))
+  $startofmonth   = Timestamp("${year}-${month}-01", '%Y-%m-%e')
+  $som_weekday    = Integer($startofmonth.strftime('%u'))
+  $day_number     = $day_of_week ? {
     'Any'       => $weekday,
     'Monday'    => 1,
     'Tuesday'   => 2,
