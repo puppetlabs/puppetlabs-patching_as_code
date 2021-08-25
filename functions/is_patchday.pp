@@ -2,15 +2,10 @@ function patching_as_code::is_patchday(
   Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
   Variant[Integer, Array] $week_iteration
 ){
-  $srv_timestamp  = Timestamp()
-  notice("Server time is: ${srv_timestamp}")
-  $srv_utc_offset = patching_as_code::get_srv_utc_offset()
-  notice("Server offset is: ${srv_utc_offset}")
+  $srv_utc_time   = Timestamp()
   $node_offset    = $facts['patching_as_code_utc_offset']
   notice("Node offset is: ${node_offset}")
-  $timezone_diff  = $node_offset - $srv_utc_offset
-  notice("Time zone difference is: ${timezone_diff}")
-  $node_timestamp = $srv_timestamp + ($timezone_diff * 3600)
+  $node_timestamp = $srv_utc_time + ($node_offset * 3600)
   notice("Node time calcuted to be: ${node_timestamp}")
   $year           = $node_timestamp.strftime('%Y')
   $month          = $node_timestamp.strftime('%m')
