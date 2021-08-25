@@ -2,14 +2,17 @@ function patching_as_code::is_patchday(
   Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
   Variant[Integer, Array] $week_iteration
 ){
-  $timestamp    = Timestamp()
-  $year         = $timestamp.strftime('%Y')
-  $month        = $timestamp.strftime('%m')
-  $weekday      = Integer($timestamp.strftime('%u'))
-  $dayofmonth   = Integer($timestamp.strftime('%e'))
-  $startofmonth = Timestamp("${year}-${month}-01", '%Y-%m-%e')
-  $som_weekday  = Integer($startofmonth.strftime('%u'))
-  $day_number = $day_of_week ? {
+  $srv_utc_time   = Timestamp()
+  $node_offset    = $facts['patching_as_code_utc_offset']
+  $node_timestamp = $srv_utc_time + ($node_offset * 3600)
+  notice("Patching_as_code - Node timestamp calculated as: ${node_timestamp}")
+  $year           = $node_timestamp.strftime('%Y')
+  $month          = $node_timestamp.strftime('%m')
+  $weekday        = Integer($node_timestamp.strftime('%u'))
+  $dayofmonth     = Integer($node_timestamp.strftime('%e'))
+  $startofmonth   = Timestamp("${year}-${month}-01", '%Y-%m-%e')
+  $som_weekday    = Integer($startofmonth.strftime('%u'))
+  $day_number     = $day_of_week ? {
     'Any'       => $weekday,
     'Monday'    => 1,
     'Tuesday'   => 2,
@@ -41,9 +44,12 @@ function patching_as_code::is_patchday(
   }
 
   # Return true if today is a patch day
+  $patch_groups = join($facts['patching_as_code_config']['patch_group'], ',')
   if $dayofmonth in $patchdays {
+    notice("Patching_as_code - Today is patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
     true
   } else {
+    notice("Patching_as_code - Today is NOT patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
     false
   }
 
