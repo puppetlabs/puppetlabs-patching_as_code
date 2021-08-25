@@ -3,9 +3,13 @@ function patching_as_code::is_patchday(
   Variant[Integer, Array] $week_iteration
 ){
   $srv_timestamp  = Timestamp()
+  notice("Server time is: ${node_timestamp}")
   $srv_utc_offset = patching_as_code::get_srv_utc_offset()
+  notice("Server offset is: ${srv_utc_offset}")
   $node_offset    = $facts['patching_as_code_utc_offset']
+  notice("Node offset is: ${node_offset}")
   $timezone_diff  = $node_offset - $srv_utc_offset
+  notice("Time zone difference is: ${timezone_diff}")
   $node_timestamp = $srv_timestamp + ($timezone_diff * 3600)
   notice("Node time calcuted to be: ${node_timestamp}")
   $year           = $node_timestamp.strftime('%Y')
