@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## Release 0.7.5
 
 **Bugfixes**
-- Now correctly adjusts for timezone differences between the Puppet Server and the managed node, ensuring that the local node time gets used to calculate if today is patch day.
+- Now correctly adjusts for timezone differences between the Puppet Server and the managed node, ensuring that the local node time & date gets used to calculate if today is patch day.
 
 ## Release 0.7.4
 
