@@ -44,11 +44,12 @@ function patching_as_code::is_patchday(
   }
 
   # Return true if today is a patch day
+  $patch_groups = join($facts['patching_as_code_config']['patch_group'], ',')
   if $dayofmonth in $patchdays {
-    notice("Patching_as_code - Today is patch day for node ${trusted['certname']}")
+    notice("Patching_as_code - Today is patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
     true
   } else {
-    notice("Patching_as_code - Today is NOT patch day for node ${trusted['certname']}")
+    notice("Patching_as_code - Today is NOT patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
     false
   }
 
