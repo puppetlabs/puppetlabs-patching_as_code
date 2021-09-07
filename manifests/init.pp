@@ -187,7 +187,8 @@ class patching_as_code(
         'name'         => $pg,
         'is_patch_day' => patching_as_code::is_patchday(
                             $patch_schedule[$pg]['day_of_week'],
-                            $patch_schedule[$pg]['count_of_week']
+                            $patch_schedule[$pg]['count_of_week'],
+                            $pg
                           )
       }
     }

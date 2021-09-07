@@ -1,6 +1,7 @@
 function patching_as_code::is_patchday(
   Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
-  Variant[Integer, Array] $week_iteration
+  Variant[Integer, Array] $week_iteration,
+  String $patch_group
 ){
   $srv_utc_time   = Timestamp()
   $node_offset    = $facts['patching_as_code_utc_offset'].empty ? {
@@ -8,7 +9,6 @@ function patching_as_code::is_patchday(
                       false => $facts['patching_as_code_utc_offset']
                     }
   $node_timestamp = $srv_utc_time + ($node_offset * 3600)
-  notice("Patching_as_code - Node UTC offset time calculated as: ${node_timestamp}")
   $year           = $node_timestamp.strftime('%Y')
   $month          = $node_timestamp.strftime('%m')
   $weekday        = Integer($node_timestamp.strftime('%u'))
@@ -47,12 +47,10 @@ function patching_as_code::is_patchday(
   }
 
   # Return true if today is a patch day
-  $patch_groups = join($patching_as_code::patch_group, ',')
   if $dayofmonth in $patchdays {
-    notice("Patching_as_code - Today is patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
+    notice("Patching_as_code - Patch group: ${patch_group} - Node ${trusted['certname']} will install patches today")
     true
   } else {
-    notice("Patching_as_code - Today is NOT patch day for node ${trusted['certname']} (patch group(s): ${patch_groups})")
     false
   }
 
