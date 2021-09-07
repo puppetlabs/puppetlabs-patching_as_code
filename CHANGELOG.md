@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.7
+
+**Bugfixes**
+- Removed a dependency on the `patching_as_code_config` fact inside of the `is_patchday()` function, preventing possible catalog compilation failures as a result of the `patching_as_code_config` fact not yet existing for new agents.
+
 ## Release 0.7.6
 
 **Bugfixes**
