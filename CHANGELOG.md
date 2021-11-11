@@ -2,9 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## Release 0.7.8
+## Release 0.7.9
 
 **Bugfixes**
+- Correct KB2267202 to KBKB2267602
+
+## Release 0.7.8
+
+**Improvements**
 - Allow reinstalls of KBKB2267202 and KB2461484 as these are monthly AV definition updates
 
 ## Release 0.7.7
