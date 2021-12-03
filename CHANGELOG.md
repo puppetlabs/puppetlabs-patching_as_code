@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.7.11
+
+**Improvements**
+- Deduplicates the list of patches to install, preventing any possible duplicate resource declarations if the list of patches to install contains the same patch more than once for any reason
+
 ## Release 0.7.10
 
 **Improvements**
