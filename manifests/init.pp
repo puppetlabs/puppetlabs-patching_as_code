@@ -310,7 +310,7 @@ class patching_as_code(
             }
             # Perform main patching run
             class { "patching_as_code::${0}::patchday":
-              updates    => $updates_to_install,
+              updates    => $updates_to_install.unique,
               patch_fact => $patch_fact,
               require    => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
