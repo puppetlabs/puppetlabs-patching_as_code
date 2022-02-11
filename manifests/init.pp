@@ -59,6 +59,10 @@
 #   (optional) The path for the command
 # @option pre_reboot_commands [String] :provider
 #   (optional) The provider for the command
+# @param [Optional[Boolean]] fact_upload
+#   How os_patching class handles changes to fact cache. Defaults to true.
+#   When true (default), `puppet fact upload` occurs as expected
+#   When false, changes to fact cache are not uploaded
 # @param [Optional[Boolean]] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 # @param [Optional[Boolean]] classify_pe_patch
@@ -83,6 +87,7 @@ class patching_as_code(
   Hash                          $pre_patch_commands,
   Hash                          $post_patch_commands,
   Hash                          $pre_reboot_commands,
+  Optional[Boolean]             $fact_upload = true,
   Optional[String]              $plan_patch_fact = undef,
   Optional[Boolean]             $enable_patching = true,
   Optional[Boolean]             $security_only = false,
@@ -140,6 +145,7 @@ class patching_as_code(
         $patch_fact = 'os_patching'
         class { 'os_patching':
           patch_window => join($patch_groups, ' '),
+          fact_upload  => $fact_upload,
         }
       }
     }
@@ -155,6 +161,7 @@ class patching_as_code(
       $patch_fact = 'os_patching'
       class { 'os_patching':
         patch_window => join($patch_groups, ' '),
+        fact_upload  => $fact_upload,
       }
     }
     default: { fail('Unsupported value for plan_patch_fact parameter!') }
