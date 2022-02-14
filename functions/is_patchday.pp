@@ -4,9 +4,9 @@ function patching_as_code::is_patchday(
   String $patch_group
 ){
   $srv_utc_time   = Timestamp()
-  $node_offset    = $facts['patching_as_code_utc_offset'].empty ? {
-                      true  => 0,
-                      false => $facts['patching_as_code_utc_offset']
+  $node_offset    = $facts['patching_as_code_utc_offset'] ? {
+                      undef   => 0,
+                      default => $facts['patching_as_code_utc_offset'],
                     }
   $node_timestamp = $srv_utc_time + ($node_offset * 3600)
   $year           = $node_timestamp.strftime('%Y')
