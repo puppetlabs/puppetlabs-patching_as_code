@@ -10,9 +10,13 @@ Puppet::Type.newtype(:patch_package) do
     desc 'Puppet schedule to link package resource to'
   end
 
+  newparam(:chocolatey) do
+    desc 'Whether this is a Chocolatey package (Windows only)'
+  end
+
   # All parameters are required
   validate do
-    [:name, :patch_window].each do |param|
+    [:name, :patch_window, :chocolatey].each do |param|
       raise Puppet::Error, "Required parameter missing: #{param}" unless @parameters[param]
     end
   end
@@ -28,11 +32,17 @@ Puppet::Type.newtype(:patch_package) do
 
     if package_in_catalog
       []
+    elsif self[:chocolatey] == true
+      [Puppet::Type.type(:package).new(name: name,
+                                      ensure: 'latest',
+                                      provider: 'chocolatey',
+                                      schedule: self[:patch_window],
+                                      before: 'Anchor[patching_as_code::patchday::end]')]
     else
       [Puppet::Type.type(:package).new(name: name,
-                                       ensure: 'latest',
-                                       schedule: self[:patch_window],
-                                       before: 'Anchor[patching_as_code::patchday::end]')]
+                                        ensure: 'latest',
+                                        schedule: self[:patch_window],
+                                        before: 'Anchor[patching_as_code::patchday::end]')]
     end
   end
 
@@ -51,6 +61,7 @@ Puppet::Type.newtype(:patch_package) do
       if ['present', 'installed', 'latest'].include?(res['ensure'].to_s)
         Puppet.send('notice', "Package[#{name}] (managed) will be updated by Patching_as_code")
         catalog.resource(package_res)['ensure'] = 'latest'
+        catalog.resource(package_res)['provider'] = 'chocolatey' if self[:chocolatey] == true
         catalog.resource(package_res)['schedule'] = self[:patch_window]
         catalog.resource(package_res)['before'] = Array(res['before']) + ['Anchor[patching_as_code::patchday::end]']
         catalog.resource(package_res)['require'] = Array(res['require']) + ['Exec[Patching as Code - Clean Cache]']

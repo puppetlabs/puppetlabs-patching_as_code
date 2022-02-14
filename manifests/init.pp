@@ -99,6 +99,7 @@ class patching_as_code(
   Optional[String]              $plan_patch_fact = undef,
   Optional[Boolean]             $enable_patching = true,
   Optional[Boolean]             $security_only = false,
+  Optional[Boolean]             $patch_choco = false,
   Optional[Boolean]             $use_pe_patch = true,
   Optional[Boolean]             $classify_pe_patch = false,
   Optional[Boolean]             $patch_on_metered_links = false,
@@ -271,18 +272,34 @@ class patching_as_code(
                       },
         default   => []
       }
+      $choco_updates = $facts['kernel'] ? {
+        'windows' =>  if $patch_choco == true {
+                        if $facts['patching_as_code_choco'] {
+                          $facts['patching_as_code_choco']['packages']
+                        } else {
+                          []
+                        }
+                      } else {
+                        []
+                      },
+        default   => []
+      }
     }
     else {
       $available_updates = []
+      $choco_updates = []
     }
 
     case $allowlist.count {
       0: {
-        $updates_to_install = $available_updates.filter |$item| { !($item in $blocklist) }
+        $updates_to_install       = $available_updates.filter |$item| { !($item in $blocklist) }
+        $choco_updates_to_install =     $choco_updates.filter |$item| { !($item in $blocklist) }
       }
       default: {
-        $whitelisted_updates = $available_updates.filter |$item| { $item in $allowlist }
-        $updates_to_install = $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $whitelisted_updates       =         $available_updates.filter |$item| { $item in $allowlist }
+        $whitelisted_choco_updates =             $choco_updates.filter |$item| { $item in $allowlist }
+        $updates_to_install        =       $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $choco_updates_to_install  = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist) }
       }
     }
 
@@ -312,7 +329,7 @@ class patching_as_code(
     }
     anchor {'patching_as_code::start':}
 
-    if ($updates_to_install.count > 0) and ($enable_patching == true) {
+    if ($updates_to_install.count + $choco_updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
@@ -327,9 +344,9 @@ class patching_as_code(
             }
             # Perform main patching run
             class { "patching_as_code::${0}::patchday":
-              updates    => $updates_to_install.unique,
-              patch_fact => $patch_fact,
-              require    => Anchor['patching_as_code::start']
+              updates => $updates_to_install.unique,
+              choco   => $choco_updates_to_install.unique,
+              require => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
               message  => "Patches installed, refreshing ${patch_fact} fact...",
               notify   => Exec["${patch_fact}::exec::fact"],
