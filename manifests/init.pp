@@ -60,9 +60,15 @@
 # @option pre_reboot_commands [String] :provider
 #   (optional) The provider for the command
 # @param [Optional[Boolean]] fact_upload
-#   How os_patching class handles changes to fact cache. Defaults to true.
+#   How os_patching/pe_patch handles changes to fact cache. Defaults to true.
 #   When true (default), `puppet fact upload` occurs as expected
 #   When false, changes to fact cache are not uploaded
+# @param [Optional[String]] plan_patch_fact
+#   Reserved parameter for running `patching_as_code` via a Plan (future functionality).
+# @param [Optional[Boolean]] enable_patching
+#   Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
+# @param [Optional[Boolean]] security_only
+#   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows, only works on Linux when using `os_patching`.
 # @param [Optional[Boolean]] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 # @param [Optional[Boolean]] classify_pe_patch
@@ -139,6 +145,7 @@ class patching_as_code(
           # Only classify pe_patch if $classify_pe_patch == true
           class { 'pe_patch':
             patch_group => join($patch_groups, ' '),
+            fact_upload => $fact_upload,
           }
         }
       } else {
@@ -154,6 +161,7 @@ class patching_as_code(
       $patch_fact = 'pe_patch'
       class { 'pe_patch':
         patch_group => join($patch_groups, ' '),
+        fact_upload => $fact_upload,
       }
     }
     'os_patching': {

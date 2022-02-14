@@ -98,7 +98,7 @@ patching_as_code::patch_group: [ testing, early ]
 
 Note: if you assign a node to multiple patch groups, the value for the patch group provided to `pe_patch`/`os_patching` will be a space-separated list of the assigned patch groups. This is because `pe_patch`/`os_patching` do not natively support multiple patch groups, so we work around this by converting our list a single string that `pe_patch`/`os_patching` can work with. This is purely for cosmetic purposes and does not affect the functionality of either solution.
 
-When using local apply for iterative development, `os_patching`'s default `fact_upload => true` may be problematic. If so, `patching_as_code`'s optional `fact_upload => false` parameter resolves. 
+When using a local apply for iterative development, the default `fact_upload => true` for `pe_patch` or `os_patching` may be problematic. If so, you can set `fact_upload => false` for `patching_os_code` to temporarily disable this behavior.
 
 ### Customizing the patch groups
 
