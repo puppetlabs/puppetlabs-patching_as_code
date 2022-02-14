@@ -98,6 +98,8 @@ patching_as_code::patch_group: [ testing, early ]
 
 Note: if you assign a node to multiple patch groups, the value for the patch group provided to `pe_patch`/`os_patching` will be a space-separated list of the assigned patch groups. This is because `pe_patch`/`os_patching` do not natively support multiple patch groups, so we work around this by converting our list a single string that `pe_patch`/`os_patching` can work with. This is purely for cosmetic purposes and does not affect the functionality of either solution.
 
+When using local apply for iterative development, `os_patching`'s default `fact_upload => true` may be problematic. If so, `patching_as_code`'s optional `fact_upload => false` parameter resolves. 
+
 ### Customizing the patch groups
 
 You can customize the patch groups to whatever you need. To do so, simply copy the `patching_as_code::patch_schedule` hash from the `data/common.yaml` in this module, and paste it into your own Hiera store (recommended to place it in your Hiera's own `common.yaml`). This Hiera value will now override the defaults that the module provides. Customize the hash to your needs.
