@@ -117,6 +117,16 @@ Options:
 
 Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 
+##### `fact_upload`
+
+Data type: `Optional[Boolean]`
+
+How os_patching/pe_patch handles changes to fact cache. Defaults to true.
+When true (default), `puppet fact upload` occurs as expected
+When false, changes to fact cache are not uploaded
+
+Default value: `true`
+
 ##### `plan_patch_fact`
 
 Data type: `Optional[String]`
@@ -137,7 +147,7 @@ Default value: `true`
 
 Data type: `Optional[Boolean]`
 
-Install only security updates. This works for Linux today, but requires a not-yet shipped update to `pe_patch` for Windows (this setting has no effect on Windows today)
+Install only security updates. Requires latest version of Puppet Enterprise to work on Windows, only works on Linux when using `os_patching`.
 
 Default value: `false`
 
