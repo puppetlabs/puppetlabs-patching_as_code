@@ -147,7 +147,10 @@ Default value: `true`
 
 Data type: `Optional[Boolean]`
 
-Install only security updates. Requires latest version of Puppet Enterprise to work on Windows, only works on Linux when using `os_patching`.
+Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
+When using `os_patching`, security updates can only be applied to Linux.
+If patching of Chocolatey packages is enabled, Chocolatey packages will still update even if
+`security_only` is set to `true`.
 
 Default value: `false`
 

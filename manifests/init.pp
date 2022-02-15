@@ -66,9 +66,13 @@
 # @param [Optional[String]] plan_patch_fact
 #   Reserved parameter for running `patching_as_code` via a Plan (future functionality).
 # @param [Optional[Boolean]] enable_patching
-#   Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
+#   Controls if `patching_as_code` is allowed to install any updates.
+#   Can be used to disable patching with a single override.
 # @param [Optional[Boolean]] security_only
-#   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows, only works on Linux when using `os_patching`.
+#   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
+#   When using `os_patching`, security updates can only be applied to Linux.
+#   If patching of Chocolatey packages is enabled, those packages will still update even if
+#   `security_only` is set to `true`.
 # @param [Optional[Boolean]] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 # @param [Optional[Boolean]] classify_pe_patch
@@ -97,6 +101,7 @@ class patching_as_code(
   Optional[String]              $plan_patch_fact = undef,
   Optional[Boolean]             $enable_patching = true,
   Optional[Boolean]             $security_only = false,
+  Optional[Boolean]             $patch_choco = false,
   Optional[Boolean]             $use_pe_patch = true,
   Optional[Boolean]             $classify_pe_patch = false,
   Optional[Boolean]             $patch_on_metered_links = false,
@@ -244,6 +249,7 @@ class patching_as_code(
         pre_reboot_commands    => $pre_reboot_commands,
         patch_on_metered_links => $patch_on_metered_links,
         security_only          => $security_only,
+        patch_choco            => $patch_choco,
         unsafe_process_list    => $unsafe_process_list,
       }
     }, false),
@@ -269,18 +275,34 @@ class patching_as_code(
                       },
         default   => []
       }
+      $choco_updates = $facts['kernel'] ? {
+        'windows' =>  if $patch_choco == true {
+                        if $facts['patching_as_code_choco'] {
+                          $facts['patching_as_code_choco']['packages']
+                        } else {
+                          []
+                        }
+                      } else {
+                        []
+                      },
+        default   => []
+      }
     }
     else {
       $available_updates = []
+      $choco_updates = []
     }
 
     case $allowlist.count {
       0: {
-        $updates_to_install = $available_updates.filter |$item| { !($item in $blocklist) }
+        $updates_to_install       = $available_updates.filter |$item| { !($item in $blocklist) }
+        $choco_updates_to_install =     $choco_updates.filter |$item| { !($item in $blocklist) }
       }
       default: {
-        $whitelisted_updates = $available_updates.filter |$item| { $item in $allowlist }
-        $updates_to_install = $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $whitelisted_updates       =         $available_updates.filter |$item| { $item in $allowlist }
+        $whitelisted_choco_updates =             $choco_updates.filter |$item| { $item in $allowlist }
+        $updates_to_install        =       $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $choco_updates_to_install  = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist) }
       }
     }
 
@@ -310,7 +332,7 @@ class patching_as_code(
     }
     anchor {'patching_as_code::start':}
 
-    if ($updates_to_install.count > 0) and ($enable_patching == true) {
+    if ($updates_to_install.count + $choco_updates_to_install.count > 0) and ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
@@ -324,13 +346,17 @@ class patching_as_code(
               }
             }
             # Perform main patching run
+            $patch_refresh_actions = $fact_upload ? {
+              true  => [ Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"] ],
+              false => Exec["${patch_fact}::exec::fact"]
+            }
             class { "patching_as_code::${0}::patchday":
-              updates    => $updates_to_install.unique,
-              patch_fact => $patch_fact,
-              require    => Anchor['patching_as_code::start']
+              updates       => $updates_to_install.unique,
+              choco_updates => $choco_updates_to_install.unique,
+              require       => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
-              message  => "Patches installed, refreshing ${patch_fact} fact...",
-              notify   => Exec["${patch_fact}::exec::fact"],
+              message  => 'Patches installed, refreshing patching facts...',
+              notify   => $patch_refresh_actions,
               schedule => 'Patching as Code - Patch Window',
             }
             if $reboot {
