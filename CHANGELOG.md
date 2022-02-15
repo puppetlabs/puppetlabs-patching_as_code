@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.0
+
+**Features**
+- Added ability to update Chocolatey packages as part of the patching run, by setting `patch_choco => true`. Allowlist & blocklist settings will be applied to Chocolatey packages as well.
+
+**Improvements**
+- Enable control of behavior for automatic uploading of facts by the `pe_patch` and `os_patching` modules (contributed by @prolixalias)
+- Fix cause of deprecation message `Calling function empty() with Numeric value is deprecated` (contributed by @prolixalias)
+
 ## Release 0.7.11
 
 **Improvements**

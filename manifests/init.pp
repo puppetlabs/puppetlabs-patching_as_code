@@ -69,8 +69,10 @@
 #   Controls if `patching_as_code` is allowed to install any updates.
 #   Can be used to disable patching with a single override.
 # @param [Optional[Boolean]] security_only
-#   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows,
-#   only works on Linux when using `os_patching`.
+#   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
+#   When using `os_patching`, security updates can only be applied to Linux.
+#   If patching of Chocolatey packages is enabled, those packages will still update even if
+#   `security_only` is set to `true`.
 # @param [Optional[Boolean]] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 # @param [Optional[Boolean]] classify_pe_patch

@@ -18,28 +18,32 @@
 
 ## Description
 
-This module provides automatic patch management for Linux and Windows through desired state code.
+This module provides automatic patch management for Linux, Windows and Chocolatey through desired state code.
 
 ## Setup
 
 ### What this module affects
 
-This module will leverage the fact data provided by either the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) or PE 2019.8's builtin `pe_patch` module.
+This module will leverage the fact data provided by either the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) or PE 2019.8's builtin `pe_patch` module for OS patches and Linux application patches (when based on Linux package manager repositories). It is also able to detect outdated Chocolatey packages.
 Once available patches are known via the above facts, the module will install the patches during the configured patch window.
-* For Linux operating systems, this happens through the native Package resource.
+* For Linux operating systems, this happens through the native Package resource in Puppet.
 * For Windows operating systems, this happens through the `patching_as_code::kb` class, which comes with this module.
+* For Chocolatey packages on Windows, this happens through the native Package resource in Puppet.
 * By default, a reboot is only performed when necessary at the end of a patch run that actually installed patches. You can change this behavior though, to either always reboot or never reboot.
 * You can define pre-patch, post-patch and pre-reboot commands for patching runs. We recommend that for Windows, you use Powershell-based commands for these. Specifically for pre-reboot commands on Windows, you *must* use Powershell-based commands.
-* This module will report the configuration for each node in a `patching_as_code_config` fact
+* This module will report the configuration for each node in a `patching_as_code_config` fact.
+* This module will report outdated Chocolatey packages for each node in a `patching_as_code_choco` fact.
 
 ### Setup Requirements
 
-To start with patching_as_code, complete the following prerequirements:
-* Ensure this module and its dependencies are added to your control repo's Puppetfile
-* If you are **not** running Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile
-* If you **are** running Puppet Enterprise 2019.8.0 or higher, the built-in `pe_patch` module will be used by default. You can however force the use of the `os_patching` module if so desired, by setting the optional `patching_as_code::use_pe_patch` parameter to `false`. To prevent duplicate declarations of the `pe_patch` class in PE 2019.8.0+, this module will default to NOT declaring the `pe_patch` class. This allows you to use the builtin "PE Patch Management" classification groups to classify `pe_patch`. If you however would like this module to control the classification of `pe_patch` for you (and sync the `patch_group` parameter), please set the `patching_as_code::classify_pe_patch` parameter to `true`.
+To start with `patching_as_code`, complete the following prerequirements:
+* Ensure this module and its dependencies are added to your control repo's Puppetfile.
+* If you are **not** running Puppet Enterprise 2019.8.0 or higher, you'll also need to add the [albatrossflavour/os_patching](https://forge.puppet.com/albatrossflavour/os_patching) module to your control repo's Puppetfile.
+* If you **are** running Puppet Enterprise 2019.8.0 or higher, the built-in `pe_patch` module will be used by default. You can however force the use of the `os_patching` module if so desired, by setting the optional `patching_as_code::use_pe_patch` parameter to `false`. To prevent duplicate declarations of the `pe_patch` class in PE 2019.8.0+, this module will default to NOT declaring the `pe_patch` class. This allows you to use the builtin "PE Patch Management" classification groups to classify `pe_patch`. If you however would like this module to control the classification of `pe_patch` for you (and sync the `patch_group` parameter, which is recommened), please set the `patching_as_code::classify_pe_patch` parameter to `true`.
 * For Linux operating systems, ensure your package managers are pointing to repositories that are publishing new package versions as needed
 * For Windows operating systems, ensure Windows Update is configured to check with a valid update server (either WSUS, Windows Update or Microsoft Update). If you want, you can use the [puppetlabs/wsus_client](https://forge.puppet.com/puppetlabs/wsus_client) module to manage the Windows Update configuration.
+* For Chocolatey packages, ensure your Chocolatey is pointing to repositories that are publishing new package versions as needed
+
 
 ### Beginning with patching_as_code
 
@@ -51,7 +55,7 @@ or
 ```
 class {'patching_as_code':}
 ```
-This enables automatic detection of available patches, and puts all the nodes in the `primary` patch group.
+This enables automatic detection of available OS patches, and puts all the nodes in the `primary` patch group.
 By default this will patch your systems on the 3rd Friday of the month, between 22:00 and midnight (00:00), and perform a reboot if necessary.
 On PE 2019.8 or newer this will not automatically classify the `pe_patch` class, so that you can control this through PE's builtin "PE Patch Management" node groups.
 
@@ -62,6 +66,14 @@ class {'patching_as_code':
 }
 ```
 This will change the behavior to also declare the `pe_patch` class, and match its `patch_group` parameter with this module's `patch_group` parameter. In this scenario, make sure you do not classify your nodes with `pe_patch` via the "PE Patch Management" node groups or other means.
+
+To allow patching_as_code to control & declare the `pe_patch` class, and also patch Chocolatey packages, set the declaration to:
+```
+class {'patching_as_code':
+  classify_pe_patch => true,
+  patch_choco       => true
+}
+```
 
 ## Usage
 
@@ -148,17 +160,18 @@ patching_as_code::patch_schedule:
 
 If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera by defining an array values for `patching_as_code::blocklist` and/or `patching_as_code::allowlist`.
 
-To prevent KB2881685 from getting installed:
+To prevent KB2881685 and the 7zip Chocolatey package from getting installed/updated on Windows:
 ```
 patching_as_code::blocklist:
   - KB2881685
+  - 7zip
 ```
-To only allow the installation of a specific set of 3 KB articles:
+To only allow the patching of a specific set of 3 Linux packages:
 ```
 patching_as_code::allowlist:
-  - KB123456
-  - KB234567
-  - KB345678
+  - grafana
+  - redis
+  - nano
 ```
 Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
 
@@ -180,7 +193,7 @@ patching_as_code::unsafe_process_list:
   - application2
 ```
 
-This works on both Linux and Windows, and the matching is done case-insensitive. If one process from the unsafe_process_list is found as an active process, patching will be skipped.
+This works on both Linux and Windows, and the matching is done case-insensitive. If one process from the `unsafe_process_list` is found as an active process, patching will be skipped.
 
 ### Managing patching over metered links (Windows only)
 
