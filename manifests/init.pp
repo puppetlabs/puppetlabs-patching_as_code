@@ -247,6 +247,7 @@ class patching_as_code(
         pre_reboot_commands    => $pre_reboot_commands,
         patch_on_metered_links => $patch_on_metered_links,
         security_only          => $security_only,
+        patch_choco            => $patch_choco,
         unsafe_process_list    => $unsafe_process_list,
       }
     }, false),
