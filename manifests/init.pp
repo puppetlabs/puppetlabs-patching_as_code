@@ -344,13 +344,17 @@ class patching_as_code(
               }
             }
             # Perform main patching run
+            $patch_refresh_actions = $fact_upload ? {
+              true  => [ Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"] ],
+              false => Exec["${patch_fact}::exec::fact"]
+            }
             class { "patching_as_code::${0}::patchday":
               updates       => $updates_to_install.unique,
               choco_updates => $choco_updates_to_install.unique,
               require       => Anchor['patching_as_code::start']
             } -> notify {'Patching as Code - Update Fact':
-              message  => "Patches installed, refreshing ${patch_fact} fact...",
-              notify   => Exec["${patch_fact}::exec::fact"],
+              message  => 'Patches installed, refreshing patching facts...',
+              notify   => $patch_refresh_actions,
               schedule => 'Patching as Code - Patch Window',
             }
             if $reboot {
