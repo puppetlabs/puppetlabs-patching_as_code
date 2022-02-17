@@ -20,14 +20,14 @@ Facter.add('patching_as_code_choco') do
       pinned = []
       # Determine Pinned packages (to be excluded from updating)
       output.each do |line|
-        data = line.split('|')
+        data = line.chomp.split('|')
         next if pinned.include? data[0].split('.')[0]
 
         pinned.push(data[0]) if data[3] == 'true'
       end
       # Determine packages to update
       output.each do |line|
-        data = line.split('|')
+        data = line.chomp.split('|')
         # Exclude subcomponents of packages
         next if pinned.include? data[0].split('.')[0]
         next if packages.include? data[0].split('.')[0]
