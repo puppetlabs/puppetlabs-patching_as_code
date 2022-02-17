@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.1
+
+**Bugfixes**
+- Improved processing of the `patching_as_config_choco` fact, to ensure backwards compatibility with Facter 3.
+- The `patching_as_config_choco` fact now no longer errors on a system that does not have `patching_as_config` enabled.
 ## Release 1.0.0
 
 **Features**
