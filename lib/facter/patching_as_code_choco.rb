@@ -2,7 +2,7 @@
 Facter.add('patching_as_code_choco') do
   confine kernel: 'windows'
   setcode do
-    if Facter.fact(:patching_as_code_config) == nil
+    if Facter.fact(:patching_as_code_config).nil?
       {
         'package_update_count' => 0,
         'packages' => [],
