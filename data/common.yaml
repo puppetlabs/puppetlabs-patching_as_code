@@ -40,6 +40,8 @@ patching_as_code::patch_schedule:
 
 patching_as_code::blocklist: []
 patching_as_code::allowlist: []
+patching_as_code::blocklist_choco: []
+patching_as_code::allowlist_choco: []
 patching_as_code::unsafe_process_list: []
 patching_as_code::pre_patch_commands: {}
 patching_as_code::post_patch_commands: {}
