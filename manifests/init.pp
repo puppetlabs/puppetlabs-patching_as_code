@@ -33,6 +33,10 @@
 #   List of updates to block from installing
 # @param [Array] allowlist
 #   List of updates that are allowed to be installed. Any updates not on this list get blocked.
+# @param [Array] blocklist_choco
+#   List of Chocolatey updates to block from installing
+# @param [Array] allowlist_choco
+#   List of Chocolatey updates that are allowed to be installed. Any Chocolatey updates not on this list get blocked.
 # @param [Array] unsafe_process_list
 #   List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
 # @param [Hash] pre_patch_commands
@@ -93,6 +97,8 @@ class patching_as_code(
   Hash                          $patch_schedule,
   Array                         $blocklist,
   Array                         $allowlist,
+  Array                         $blocklist_choco,
+  Array                         $allowlist_choco,
   Array                         $unsafe_process_list,
   Hash                          $pre_patch_commands,
   Hash                          $post_patch_commands,
@@ -236,6 +242,8 @@ class patching_as_code(
       patching_as_code_config => {
         allowlist              => $allowlist,
         blocklist              => $blocklist,
+        allowlist_choco        => $allowlist_choco,
+        blocklist_choco        => $blocklist_choco,
         enable_patching        => $enable_patching,
         patch_fact             => $patch_fact,
         patch_group            => $patch_groups,
@@ -296,13 +304,20 @@ class patching_as_code(
     case $allowlist.count {
       0: {
         $updates_to_install       = $available_updates.filter |$item| { !($item in $blocklist) }
-        $choco_updates_to_install =     $choco_updates.filter |$item| { !($item in $blocklist) }
       }
       default: {
         $whitelisted_updates       =         $available_updates.filter |$item| { $item in $allowlist }
-        $whitelisted_choco_updates =             $choco_updates.filter |$item| { $item in $allowlist }
         $updates_to_install        =       $whitelisted_updates.filter |$item| { !($item in $blocklist) }
-        $choco_updates_to_install  = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist) }
+      }
+    }
+
+    case $allowlist_choco.count {
+      0: {
+        $choco_updates_to_install =     $choco_updates.filter |$item| { !($item in $blocklist_choco) }
+      }
+      default: {
+        $whitelisted_choco_updates =             $choco_updates.filter |$item| { $item in $allowlist_choco }
+        $choco_updates_to_install  = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist_choco) }
       }
     }
 
@@ -316,7 +331,7 @@ class patching_as_code(
       'ifneeded': {true}
       default:    {false}
     }
-    if $reboot {
+    if $reboot and $enable_patching {
       # Reboot the node first if a reboot is already pending
       case $facts['kernel'].downcase() {
         /(windows|linux)/: {
