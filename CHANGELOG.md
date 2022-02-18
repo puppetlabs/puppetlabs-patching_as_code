@@ -2,11 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.2
+
+**Improvements**
+- Split the `allowlist` and `blacklist` to have dedicated lists for Chocolatey, with the new `allowlist_choco` and `blacklist_choco` parameters. These new parameters now must be used for Chocolatey packages, the regular `allowlist` and `blacklist` will not affect Chocolatey packages anymore.
+- Pending OS reboots will now no longer occur if `enable_patching` has been changed to `false`. This is to enable the `enable_patching` parameter being used as a single switch to ensure that no disruptive action can happen at all.
+
 ## Release 1.0.1
 
 **Bugfixes**
 - Improved processing of the `patching_as_config_choco` fact, to ensure backwards compatibility with Facter 3.
 - The `patching_as_config_choco` fact now no longer errors on a system that does not have `patching_as_config` enabled.
+
 ## Release 1.0.0
 
 **Features**

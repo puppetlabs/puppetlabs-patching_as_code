@@ -158,12 +158,13 @@ patching_as_code::patch_schedule:
 
 ## Controlling which patches get installed
 
-If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera by defining an array values for `patching_as_code::blocklist` and/or `patching_as_code::allowlist`.
+If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera by defining an array values for `patching_as_code::blocklist` and/or `patching_as_code::allowlist` for Windows Updates and Linux packages. For Chocolatey packages, separate Hiera values `patching_as_code::blocklist_choco` and/or `patching_as_code::allowlist_choco` can be set.
 
 To prevent KB2881685 and the 7zip Chocolatey package from getting installed/updated on Windows:
 ```
 patching_as_code::blocklist:
   - KB2881685
+patching_as_code::blocklist_choco:
   - 7zip
 ```
 To only allow the patching of a specific set of 3 Linux packages:
@@ -173,7 +174,7 @@ patching_as_code::allowlist:
   - redis
   - nano
 ```
-Both options can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
+Allow lists and block lists can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
 
 ## Defining situations when patching needs to be skipped
 
