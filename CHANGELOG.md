@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.3
+
+**Bugfixes**
+- No longer adds `Exec[Patching as Code - Clean Cache]` to the `require` metaparameter of managed Chocolatey package resources that will be patched.
+
 ## Release 1.0.2
 
 **Improvements**
