@@ -12,6 +12,7 @@ Puppet::Type.newtype(:patch_package) do
 
   newparam(:chocolatey) do
     desc 'Whether this is a Chocolatey package (Windows only)'
+    defaultto :false
   end
 
   # All parameters are required

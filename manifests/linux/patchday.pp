@@ -38,7 +38,6 @@ class patching_as_code::linux::patchday (
   $updates.each | $package | {
     patch_package { $package:
       patch_window => 'Patching as Code - Patch Window',
-      chocolatey   => false,
       require      => Exec['Patching as Code - Clean Cache']
     }
   }
