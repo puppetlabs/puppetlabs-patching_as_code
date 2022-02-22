@@ -369,6 +369,11 @@ class patching_as_code(
               updates       => $updates_to_install.unique,
               choco_updates => $choco_updates_to_install.unique,
               require       => Anchor['patching_as_code::start']
+            } -> file {'Patching as Code - Update Last Run Date':
+              ensure    => file,
+              path      => "${facts['puppet_vardir']}/../../${patch_fact}/patching_as_code_last_run",
+              show_diff => false,
+              content   => Deferred('Timestamp',[]),
             } -> notify {'Patching as Code - Update Fact':
               message  => 'Patches installed, refreshing patching facts...',
               notify   => $patch_refresh_actions,
