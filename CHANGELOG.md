@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.4
+
+**Features**
+- Added a `patching_as_code` fact that details the date & time of the last successful patch run, as well as which packages were installed.
+
 ## Release 1.0.3
 
 **Bugfixes**
