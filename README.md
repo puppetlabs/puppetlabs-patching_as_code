@@ -31,6 +31,7 @@ Once available patches are known via the above facts, the module will install th
 * For Chocolatey packages on Windows, this happens through the native Package resource in Puppet.
 * By default, a reboot is only performed when necessary at the end of a patch run that actually installed patches. You can change this behavior though, to either always reboot or never reboot.
 * You can define pre-patch, post-patch and pre-reboot commands for patching runs. We recommend that for Windows, you use Powershell-based commands for these. Specifically for pre-reboot commands on Windows, you *must* use Powershell-based commands.
+* This module will report the details of the last successful patch run in a `patching_as_code` fact.
 * This module will report the configuration for each node in a `patching_as_code_config` fact.
 * This module will report outdated Chocolatey packages for each node in a `patching_as_code_choco` fact.
 
