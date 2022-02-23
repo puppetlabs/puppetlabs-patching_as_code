@@ -373,7 +373,7 @@ class patching_as_code(
               ensure    => file,
               path      => "${facts['puppet_vardir']}/../../${patch_fact}/patching_as_code_last_run",
               show_diff => false,
-              content   => Deferred('patching_as_code::current_date',[]),
+              content   => Deferred('patching_as_code::last_run',[$updates_to_install, $choco_updates_to_install]),
             } -> notify {'Patching as Code - Update Fact':
               message  => 'Patches installed, refreshing patching facts...',
               notify   => $patch_refresh_actions,
