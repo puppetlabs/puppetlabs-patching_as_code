@@ -369,9 +369,11 @@ class patching_as_code(
               updates       => $updates_to_install.unique,
               choco_updates => $choco_updates_to_install.unique,
               require       => Anchor['patching_as_code::start']
+            } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
+              ensure => directory
             } -> file {'Patching as Code - Save Patch Run Info':
               ensure    => file,
-              path      => "${facts['puppet_vardir']}/../../${patch_fact}/patching_as_code_last_run",
+              path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
               show_diff => false,
               content   => Deferred('patching_as_code::last_run',[$updates_to_install, $choco_updates_to_install]),
             } -> notify {'Patching as Code - Update Fact':
