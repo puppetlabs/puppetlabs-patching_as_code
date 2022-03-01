@@ -3,7 +3,7 @@ Facter.add('patching_as_code') do
     file = "#{Facter.value(:puppet_vardir)}/../../patching_as_code/last_run"
     begin
       if File.exist?(file)
-        last_run = JSON.parse(File.read(option1))
+        last_run = JSON.parse(File.read(file))
         result = {}
         result['last_patch_run']            = last_run['last_run']
         result['days_since_last_patch_run'] = (DateTime.now.to_date - DateTime.strptime(last_run['last_run'], '%Y-%m-%d %H:%M').to_date).to_i
