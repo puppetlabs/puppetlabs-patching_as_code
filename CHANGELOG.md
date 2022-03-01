@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.5
+
+**Bugfixes**
+- Moves the location of the `patching_as_code` fact content to `/opt/puppetlabs/patching_as_code` (or `%ProgramData%\PuppetLabs\patching_as_code` on Windows), to remove a dependency on `pe_patch/os_patching` creating the directory where the last_run file content can be stored.
+- Fixes an incompatibility with `os_patching` that was caused by the wrong directory being assumed for the `patching_as_code` fact content when using `os_patching`.
+
 ## Release 1.0.4
 
 **Features**
