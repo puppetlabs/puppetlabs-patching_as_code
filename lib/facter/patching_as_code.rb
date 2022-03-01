@@ -1,12 +1,13 @@
 Facter.add('patching_as_code') do
   setcode do
     directory = "#{Facter.value(:puppet_vardir)}/../../patching_as_code"
-    file = "#{directory}/last_run"
+    file      = "#{directory}/last_run"
+    oldfile   = "#{Facter.value(:puppet_vardir)}/../../pe_patch/patching_as_code_last_run"
     begin
       # Migrate fact if still in old location
-      if File.exist?("#{directory}/../pe_patch/patching_as_code_last_run")
+      if File.exist?(oldfile)
         Dir.mkdir(directory) unless Dir.exist?(directory)
-        File.rename "#{directory}/../pe_patch/patching_as_code_last_run", file
+        File.rename oldfile, file
       end
       if File.exist?(file)
         last_run = JSON.parse(File.read(file))
