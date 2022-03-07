@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.1.0
+
+**Features**
+- Adds support for high priority patches on an alternate patch schedule.
+- Adds `high_priority_only` parameter to the `patching_as_code` class, for compatibility with the `puppetlabs/change_window` module.
+
+**Improvements**
+- Ensures the last_run fact data only gets written during the patch window.
+
 ## Release 1.0.5
 
 **Bugfixes**
