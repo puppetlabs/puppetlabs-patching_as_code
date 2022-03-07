@@ -563,7 +563,7 @@ class patching_as_code(
                   fail('Unsupported operating system for Patching as Code!')
                 }
               }
-              if $reboot and $bool_patch_day {
+              if $reboot and $bool_patch_day and !$high_priority_only {
                 $pre_reboot_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - Before reboot - ${cmd}":
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
