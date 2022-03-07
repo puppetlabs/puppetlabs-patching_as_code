@@ -431,32 +431,40 @@ class patching_as_code(
               require                 => Anchor['patching_as_code::start']
             } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
               ensure => directory
-            } -> file {'Patching as Code - Save Patch Run Info':
-              ensure    => file,
-              path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
-              show_diff => false,
-              content   => Deferred('patching_as_code::last_run',[
-                $updates_to_install,
-                $choco_updates_to_install
-              ]),
-              schedule  => 'Patching as Code - Patch Window',
-            } -> file {'Patching as Code - Save High Priority Patch Run Info':
-              ensure    => file,
-              path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
-              show_diff => false,
-              content   => Deferred('patching_as_code::high_prio_last_run',[
-                $high_prio_updates_to_install,
-                $high_prio_choco_updates_to_install
-              ]),
-              schedule  => 'Patching as Code - High Priority Patch Window',
-            } -> notify {'Patching as Code - Update Fact':
-              message  => 'Patches installed, refreshing patching facts...',
-              notify   => $patch_refresh_actions,
-              schedule => 'Patching as Code - Patch Window',
-            } -> notify {'Patching as Code - Update Fact (High Priority)':
-              message  => 'Patches installed, refreshing patching facts...',
-              notify   => $patch_refresh_actions,
-              schedule => 'Patching as Code - High Priority Patch Window',
+            }
+            if ($updates_to_install.count + $choco_updates_to_install.count > 0) {
+              file {'Patching as Code - Save Patch Run Info':
+                ensure    => file,
+                path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
+                show_diff => false,
+                content   => Deferred('patching_as_code::last_run',[
+                  $updates_to_install,
+                  $choco_updates_to_install
+                ]),
+                schedule  => 'Patching as Code - Patch Window',
+                require   => File["${facts['puppet_vardir']}/../../patching_as_code"]
+              } -> notify {'Patching as Code - Update Fact':
+                message  => 'Patches installed, refreshing patching facts...',
+                notify   => $patch_refresh_actions,
+                schedule => 'Patching as Code - Patch Window',
+              }
+            }
+            if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
+              file {'Patching as Code - Save High Priority Patch Run Info':
+                ensure    => file,
+                path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
+                show_diff => false,
+                content   => Deferred('patching_as_code::high_prio_last_run',[
+                  $high_prio_updates_to_install,
+                  $high_prio_choco_updates_to_install
+                ]),
+                schedule  => 'Patching as Code - High Priority Patch Window',
+                require   => File["${facts['puppet_vardir']}/../../patching_as_code"]
+              } -> notify {'Patching as Code - Update Fact (High Priority)':
+                message  => 'Patches installed, refreshing patching facts...',
+                notify   => $patch_refresh_actions,
+                schedule => 'Patching as Code - High Priority Patch Window',
+              }
             }
             if $reboot or $high_prio_reboot {
               # Reboot after patching (in later patch_reboot stage)
