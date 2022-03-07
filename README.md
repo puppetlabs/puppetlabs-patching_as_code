@@ -11,9 +11,13 @@
     - [Beginning with patching_as_code](#beginning-with-patching_as_code)
   - [Usage](#usage)
     - [Customizing the patch groups](#customizing-the-patch-groups)
-  - [Controlling which patches get installed](#controlling-which-patches-get-installed)
-  - [Defining situations when patching needs to be skipped](#defining-situations-when-patching-needs-to-be-skipped)
-  - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
+    - [Controlling which patches get installed](#controlling-which-patches-get-installed)
+    - [Setting a High Priority patch schedule and list](#setting-a-high-priority-patch-schedule-and-list)
+    - [Compatibility with puppetlabs/change_window](#compatibility-with-puppetlabschangewindow)
+    - [Defining situations when patching needs to be skipped](#defining-situations-when-patching-needs-to-be-skipped)
+    - [Managing unsafe processes for patching](#managing-unsafe-processes-for-patching)
+    - [Managing patching over metered links (Windows only)](#managing-patching-over-metered-links-windows-only)
+    - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
   - [Limitations](#limitations)
 
 ## Description
@@ -29,11 +33,12 @@ Once available patches are known via the above facts, the module will install th
 * For Linux operating systems, this happens through the native Package resource in Puppet.
 * For Windows operating systems, this happens through the `patching_as_code::kb` class, which comes with this module.
 * For Chocolatey packages on Windows, this happens through the native Package resource in Puppet.
-* By default, a reboot is only performed when necessary at the end of a patch run that actually installed patches. You can change this behavior though, to either always reboot or never reboot.
+* By default, a reboot is performed before patching when a pre-existing pending reboot is detected, as well as at the end of a patch run when one or more patches caused an OS reboot to become pending. You can change this behavior though, to either always reboot or never reboot.
 * You can define pre-patch, post-patch and pre-reboot commands for patching runs. We recommend that for Windows, you use Powershell-based commands for these. Specifically for pre-reboot commands on Windows, you *must* use Powershell-based commands.
 * This module will report the details of the last successful patch run in a `patching_as_code` fact.
 * This module will report the configuration for each node in a `patching_as_code_config` fact.
 * This module will report outdated Chocolatey packages for each node in a `patching_as_code_choco` fact.
+* You can define an alternate patch schedule for high priority patches, to allow patches on the `high_priority_list` to be installed on a different (often faster) patch cycle.
 
 ### Setup Requirements
 
@@ -80,32 +85,32 @@ class {'patching_as_code':
 
 To control which patch group(s) a node belongs to, you need to set the `patch_group` parameter of the class.
 It is highly recommended to use Hiera to set the correct value for each node, for example:
-```
+```yaml
 patching_as_code::patch_group: early
-```
+```yaml
 The module provides 6 patch groups out of the box:
-```
+```yaml
 weekly:    patches each Thursday of the month, between 09:00 and 11:00, performs a reboot if needed
 testing:   patches every 2nd Thursday of the month, between 07:00 and 09:00, performs a reboot if needed
 early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, performs a reboot if needed
 primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot if needed
 secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
 late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
-```
+```yaml
 There are also 2 special built-in patch groups:
-```
+```yaml
 always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot if needed
 never:     never performs any patching and does not reboot
 ```
 
 If you want to assign a node to multiple patch groups, specify an array of values in Hiera:
-```
+```yaml
 patching_as_code::patch_group:
   - testing
   - early
 ```
 or, in flow style:
-```
+```yaml
 patching_as_code::patch_group: [ testing, early ]
 ```
 
@@ -118,7 +123,7 @@ When using a local apply for iterative development, the default `fact_upload => 
 You can customize the patch groups to whatever you need. To do so, simply copy the `patching_as_code::patch_schedule` hash from the `data/common.yaml` in this module, and paste it into your own Hiera store (recommended to place it in your Hiera's own `common.yaml`). This Hiera value will now override the defaults that the module provides. Customize the hash to your needs.
 
 The hash has the following structure:
-```
+```yaml
 patching_as_code::patch_schedule:
   <name of patch group>:
     day_of_week:   <day to patch systems>
@@ -128,14 +133,13 @@ patching_as_code::patch_schedule:
     reboot:        always | never | ifneeded
 ```
 For example, say you want to have the following 2 patch groups:
-```
+```yaml
 group1: patches every 2nd Sunday of the month, between 10:00 and 11:00, max 1 time, reboots if needed
 group2: patches every 3nd and 4th Monday of the month, between 20:00 and 22:00, max 3 times, does not reboot
 group3: patches every day in the 3rd week of the month, between 18:00 and 20:00, max 4 times, always reboots
-
 ```
 then define the hash as follows:
-```
+```yaml
 patching_as_code::patch_schedule:
   group1:
     day_of_week: Sunday
@@ -157,19 +161,19 @@ patching_as_code::patch_schedule:
     reboot: always
 ```
 
-## Controlling which patches get installed
+### Controlling which patches get installed
 
 If you need to limit which patches can get installed, use the blocklist/allowlist capabilties. This is best done through Hiera by defining an array values for `patching_as_code::blocklist` and/or `patching_as_code::allowlist` for Windows Updates and Linux packages. For Chocolatey packages, separate Hiera values `patching_as_code::blocklist_choco` and/or `patching_as_code::allowlist_choco` can be set.
 
 To prevent KB2881685 and the 7zip Chocolatey package from getting installed/updated on Windows:
-```
+```yaml
 patching_as_code::blocklist:
   - KB2881685
 patching_as_code::blocklist_choco:
   - 7zip
 ```
 To only allow the patching of a specific set of 3 Linux packages:
-```
+```yaml
 patching_as_code::allowlist:
   - grafana
   - redis
@@ -177,7 +181,39 @@ patching_as_code::allowlist:
 ```
 Allow lists and block lists can be combined, in that case the list of available updates first gets reduced to the what is allowed by the allowlist, and then gets further reduced by any blocklisted updates.
 
-## Defining situations when patching needs to be skipped
+### Setting a High Priority patch schedule and list
+
+If you would like to install certain patches on a different, often faster, schedule compared to regular patches, you can configure this in the module. This requires specifying patches for the `patching_as_code::high_priority_list` and/or `patching_as_code::high_priority_list_choco` values in Hiera, and setting a `patching_as_code::high_priority_patch_group` to associate one of the patch schedules to this list.
+
+For example, to allow the Microsoft Defender definition update and 7zip Chocolatey package to always be installed immediately:
+```yaml
+patching_as_code::high_priority_patch_group: always
+patching_as_code::high_priority_list:
+  - KB4052623
+patching_as_code::high_priority_list_choco:
+  - 7zip
+```
+Note that if you want to prevent any reboots from happening for your high priority runs, you should create a custom patch group that sets the `reboot` parameter to `never`, and use that group for the `patching_as_code::high_priority_patch_group` parameter.
+
+### Compatibility with puppetlabs/change_window
+
+If you leverage the `puppetlabs/change_window` module to define custom change windows and want to use that module in combination with the High Priority patch window support in this module, you should leverage the `high_priority_only` parameter for the `patching_as_code` class to get the correct behavior. In this case, your logic should be something as follows:
+```
+$in_patch_window = Boolean(change_window::change_window($tz, $type, $window_wday, $window_time, $window_week, $window_month))
+
+if $in_patch_window {
+  class {'patching_as_code':
+    high_priority_only => false,
+  }
+else {
+  class {'patching_as_code':
+    high_priority_only => true,
+  }
+}
+```
+This will allow `patching_as_code` to keep patch information up to date outside of the change window(s) defined by `puppetlabs/change_window`, and only perform regular patch runs when inside those change window(s). If you don't put any patches on the `high_priority_list`, running with `high_priority_only => true` will cause nothing to happen. Conversely, if you do need a high priority patch to be deployed, running with `high_priority_only => true` will allow those high priority patches to be installed. Use the patch schedule capabilities of `patching_as_code` to control when high priority patches are allowed to be installed, as documented above.
+
+### Defining situations when patching needs to be skipped
 
 There could be situations where you don't want patching to occur if certain conditions are met. This module supports two such situations:
 
@@ -189,7 +225,7 @@ There could be situations where you don't want patching to occur if certain cond
 You can define a list of unsafe processes which, if any are found to be active on the node, should cause patching to be skipped. This is best done through Hiera, by defining an array value for `patching_as_code::unsafe_process_list`.
 
 To skip patching if `application1` or `application2` is among the active processes:
-```
+```yaml
 patching_as_code::unsafe_process_list:
   - application1
   - application2
@@ -200,7 +236,7 @@ This works on both Linux and Windows, and the matching is done case-insensitive.
 ### Managing patching over metered links (Windows only)
 
 By default, this module will not perform patching over metered links (e.g. 3G/4G connections). You can control this behavior through the `patch_on_metered_links` parameter. To force patching to occur even over metered links, either define this value in Hiera:
-```
+```yaml
 patching_as_code::patch_on_metered_links: true
 ```
 or set this parameter as part of calling the class:
@@ -210,7 +246,7 @@ class {'patching_as_code':
 }
 ```
 
-## Defining pre/post-patching and pre-reboot commands
+### Defining pre/post-patching and pre-reboot commands
 
 You can control additional commands that get executed at specific times, to facilitate the patch run. For example, you may want to shutdown specific applications before patching, or drain a kubernetes node before rebooting. The order of operations is as follows:
 1) If reboots are enabled, check for pending reboots and reboot system immediately if a pending reboot is found
@@ -221,7 +257,7 @@ You can control additional commands that get executed at specific times, to faci
 6) If reboots are enabled, reboot system (if a reboot is pending, or when reboots are set to `always`)
 
 To define the pre/post-patching and pre-reboot commands, you need to create hashes in Hiera. The commands will be executed as `Exec` resources, and you can use any of the [allowed attributes](https://puppet.com/docs/puppet/6.17/types/exec.html#exec-attributes) for that resource (just don't use metaparameters). There are 3 hashes you can define:
-```
+```yaml
 patching_as_code::pre_patch_commands
 patching_as_code::post_patch_commands
 patching_as_code::pre_reboot_commands
@@ -229,13 +265,13 @@ patching_as_code::pre_reboot_commands
 
 It's best to define this in Hiera, so that the commands can be tailored to individual nodes or groups of nodes.
 A hash for a command (let's use pre-reboot as an example) looks like this in Hiera:
-```
+```yaml
 patching_as_code::pre_reboot_commands:
   prep k8s for reboot:
     command: /usr/bin/kubectl drain k8s-3.company.local --ignore-daemonsets --delete-local-data
 ```
 Here's another example, this time for a pre-patch powershell command on Windows:
-```
+```yaml
 patching_as_code::pre_patch_commands:
   shutdown SQL server:
     command: Stop-Service MSSQLSERVER -Force 

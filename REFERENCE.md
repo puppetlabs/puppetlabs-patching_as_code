@@ -74,6 +74,37 @@ Data type: `Array`
 
 List of updates that are allowed to be installed. Any updates not on this list get blocked.
 
+##### `blocklist_choco`
+
+Data type: `Array`
+
+List of Chocolatey updates to block from installing
+
+##### `allowlist_choco`
+
+Data type: `Array`
+
+List of Chocolatey updates that are allowed to be installed. Any Chocolatey updates not on this list get blocked.
+
+##### `high_priority_patch_group`
+
+Data type: `String`
+
+Name of the high_priority_patch_group for this node. Must match a patch group in `$patch_schedule`
+This patch schedule will only be used for patches in the `$high_priority_list`.
+
+##### `high_priority_list`
+
+Data type: `Array`
+
+List of updates to install on the patch schedule set by `$high_priority_patch_group`.
+
+##### `high_priority_list_choco`
+
+Data type: `Array`
+
+List of Chocolatey updates to install on the patch schedule set by `$high_priority_patch_group`.
+
 ##### `unsafe_process_list`
 
 Data type: `Array`
@@ -154,6 +185,17 @@ If patching of Chocolatey packages is enabled, Chocolatey packages will still up
 
 Default value: `false`
 
+##### `high_priority_only`
+
+Data type: `Optional[Boolean]`
+
+Only allow updates from the `$high_priority_list` to be installed. Enabling this option will prevent
+regular patches from being installed, and will skip a pending reboot at the beginning of the patch
+run if a pending reboot is detected. A pending reboot may still happen at the end of the patch run,
+as long as the patch schedule set by `$high_priority_patch_group` allows reboots to occur.
+
+Default value: `false`
+
 ##### `use_pe_patch`
 
 Data type: `Optional[Boolean]`
@@ -185,4 +227,3 @@ When enabled, patching are installed even over a metered link.
 When disabled (default), patches are not installed over a metered link.
 
 Default value: `false`
-

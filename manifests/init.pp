@@ -37,6 +37,13 @@
 #   List of Chocolatey updates to block from installing
 # @param [Array] allowlist_choco
 #   List of Chocolatey updates that are allowed to be installed. Any Chocolatey updates not on this list get blocked.
+# @param [String] high_priority_patch_group
+#   Name of the high_priority_patch_group for this node. Must match a patch group in `$patch_schedule`
+#   This patch schedule will only be used for patches in the `$high_priority_list`.
+# @param [Array] high_priority_list
+#   List of updates to install on the patch schedule set by `$high_priority_patch_group`.
+# @param [Array] high_priority_list_choco
+#   List of Chocolatey updates to install on the patch schedule set by `$high_priority_patch_group`.
 # @param [Array] unsafe_process_list
 #   List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
 # @param [Hash] pre_patch_commands
@@ -77,6 +84,11 @@
 #   When using `os_patching`, security updates can only be applied to Linux.
 #   If patching of Chocolatey packages is enabled, those packages will still update even if
 #   `security_only` is set to `true`.
+# @param [Optional[Boolean]] high_priority_only
+#   Only allow updates from the `$high_priority_list` to be installed. Enabling this option will prevent
+#   regular patches from being installed, and will skip a pending reboot at the beginning of the patch
+#   run if a pending reboot is detected. A pending reboot may still happen at the end of the patch run,
+#   as long as the patch schedule set by `$high_priority_patch_group` allows reboots to occur.
 # @param [Optional[Boolean]] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 # @param [Optional[Boolean]] classify_pe_patch
