@@ -421,9 +421,7 @@ class patching_as_code(
     }
     anchor {'patching_as_code::start':}
 
-    if ($updates_to_install.count + $choco_updates_to_install.count +
-    $high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and
-    ($enable_patching == true) {
+    if $enable_patching == true {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
@@ -453,14 +451,17 @@ class patching_as_code(
               true  => [ Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"] ],
               false => Exec["${patch_fact}::exec::fact"]
             }
-            class { "patching_as_code::${0}::patchday":
-              updates                 => $updates_to_install.unique,
-              choco_updates           => $choco_updates_to_install.unique,
-              high_prio_updates       => $high_prio_updates_to_install.unique,
-              high_prio_choco_updates => $high_prio_choco_updates_to_install.unique,
-              require                 => Anchor['patching_as_code::start']
-            } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
-              ensure => directory
+            if ($updates_to_install.count + $choco_updates_to_install.count +
+            $high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
+              class { "patching_as_code::${0}::patchday":
+                updates                 => $updates_to_install.unique,
+                choco_updates           => $choco_updates_to_install.unique,
+                high_prio_updates       => $high_prio_updates_to_install.unique,
+                high_prio_choco_updates => $high_prio_choco_updates_to_install.unique,
+                require                 => Anchor['patching_as_code::start']
+              } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
+                ensure => directory
+              }
             }
             if ($updates_to_install.count + $choco_updates_to_install.count > 0) {
               file {'Patching as Code - Save Patch Run Info':
@@ -496,7 +497,8 @@ class patching_as_code(
                 schedule => 'Patching as Code - High Priority Patch Window',
               }
             }
-            if $reboot or $high_prio_reboot {
+            if ($reboot and $bool_patch_day) or ($high_prio_reboot and
+              ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) {
               # Reboot after patching (in later patch_reboot stage)
               if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
                 class { 'patching_as_code::reboot':
@@ -561,7 +563,7 @@ class patching_as_code(
                   fail('Unsupported operating system for Patching as Code!')
                 }
               }
-              if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
+              if $reboot and $bool_patch_day {
                 $pre_reboot_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - Before reboot - ${cmd}":
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
@@ -573,7 +575,7 @@ class patching_as_code(
                   }
                 }
               }
-              if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
+              if $high_prio_reboot and ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
                 $pre_reboot_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - Before reboot (High Priority) - ${cmd}":
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
