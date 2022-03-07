@@ -469,7 +469,7 @@ class patching_as_code(
               }
               if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
                 class { 'patching_as_code::high_prio_reboot':
-                  reboot_if_needed => $reboot_if_needed,
+                  reboot_if_needed => $high_prio_reboot_if_needed,
                   schedule         => 'Patching as Code - High Priority Patch Window',
                   stage            => patch_reboot
                 }
@@ -503,10 +503,18 @@ class patching_as_code(
                     true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
                     false => undef
                   }
+                  $reboot_logic_onlyif_high_prio = $high_prio_reboot_if_needed ? {
+                    true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
+                    false => undef
+                  }
                 }
                 'linux': {
                   $reboot_logic_provider = 'posix'
                   $reboot_logic_onlyif   = $reboot_if_needed ? {
+                    true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
+                    false => undef
+                  }
+                  $reboot_logic_onlyif_high_prio = $high_prio_reboot_if_needed ? {
                     true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
                     false => undef
                   }
@@ -532,7 +540,7 @@ class patching_as_code(
                   exec { "Patching as Code - Before reboot (High Priority) - ${cmd}":
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
                     provider => $reboot_logic_provider,
-                    onlyif   => $reboot_logic_onlyif,
+                    onlyif   => $reboot_logic_onlyif_high_prio,
                     require  => Class["patching_as_code::${0}::patchday"],
                     schedule => 'Patching as Code - High Priority Patch Window',
                     tag      => ['patching_as_code_pre_reboot']
