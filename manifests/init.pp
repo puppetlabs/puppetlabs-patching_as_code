@@ -403,7 +403,8 @@ class patching_as_code(
           }
         }
       }
-      if $high_prio_reboot and $bool_high_prio_patch_day {
+      if $high_prio_reboot and $bool_high_prio_patch_day and
+      ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0){
         # Reboot the node first if a reboot is already pending
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
