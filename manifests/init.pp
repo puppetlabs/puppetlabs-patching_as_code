@@ -458,7 +458,8 @@ class patching_as_code(
                 choco_updates           => $choco_updates_to_install.unique,
                 high_prio_updates       => $high_prio_updates_to_install.unique,
                 high_prio_choco_updates => $high_prio_choco_updates_to_install.unique,
-                require                 => Anchor['patching_as_code::start']
+                require                 => Anchor['patching_as_code::start'],
+                before                  => Anchor['patching_as_code::post']
               } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
                 ensure => directory
               }
@@ -473,11 +474,13 @@ class patching_as_code(
                   $choco_updates_to_install
                 ]),
                 schedule  => 'Patching as Code - Patch Window',
-                require   => File["${facts['puppet_vardir']}/../../patching_as_code"]
+                require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
+                before    => Anchor['patching_as_code::post']
               } -> notify {'Patching as Code - Update Fact':
                 message  => 'Patches installed, refreshing patching facts...',
                 notify   => $patch_refresh_actions,
                 schedule => 'Patching as Code - Patch Window',
+                before   => Anchor['patching_as_code::post']
               }
             }
             if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
@@ -490,13 +493,16 @@ class patching_as_code(
                   $high_prio_choco_updates_to_install
                 ]),
                 schedule  => 'Patching as Code - High Priority Patch Window',
-                require   => File["${facts['puppet_vardir']}/../../patching_as_code"]
+                require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
+                before    => Anchor['patching_as_code::post']
               } -> notify {'Patching as Code - Update Fact (High Priority)':
                 message  => 'Patches installed, refreshing patching facts...',
                 notify   => $patch_refresh_actions,
                 schedule => 'Patching as Code - High Priority Patch Window',
+                before   => Anchor['patching_as_code::post']
               }
             }
+            anchor {'patching_as_code::post':}
             if ($reboot and $bool_patch_day) or ($high_prio_reboot and
               ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) {
               # Reboot after patching (in later patch_reboot stage)
@@ -519,7 +525,7 @@ class patching_as_code(
                 $post_patch_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - After patching - ${cmd}":
                     *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
                     tag      => ['patching_as_code_post_patching']
                   } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
@@ -529,7 +535,7 @@ class patching_as_code(
                 $post_patch_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - After patching (High Priority) - ${cmd}":
                     *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
                     tag      => ['patching_as_code_post_patching']
                   } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
@@ -569,7 +575,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
                     provider => $reboot_logic_provider,
                     onlyif   => $reboot_logic_onlyif,
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
                     tag      => ['patching_as_code_pre_reboot']
                   }
@@ -581,7 +587,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
                     provider => $reboot_logic_provider,
                     onlyif   => $reboot_logic_onlyif_high_prio,
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
                     tag      => ['patching_as_code_pre_reboot']
                   }
@@ -593,7 +599,7 @@ class patching_as_code(
                 $post_patch_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - After patching - ${cmd}":
                     *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
                     tag      => ['patching_as_code_post_patching']
                   }
@@ -603,7 +609,7 @@ class patching_as_code(
                 $post_patch_commands.each | $cmd, $cmd_opts | {
                   exec { "Patching as Code - After patching (High Priority)- ${cmd}":
                     *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
-                    require  => Class["patching_as_code::${0}::patchday"],
+                    require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
                     tag      => ['patching_as_code_post_patching']
                   }
