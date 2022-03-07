@@ -389,7 +389,7 @@ class patching_as_code(
 
     # Perform pending reboots pre-patching, except if this is a high prio only run
     if $enable_patching and !$high_priority_only {
-      if ($reboot and ($updates_to_install.count + $choco_updates_to_install.count > 0)) {
+      if $reboot and $bool_patch_day {
         # Reboot the node first if a reboot is already pending
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
@@ -403,7 +403,7 @@ class patching_as_code(
           }
         }
       }
-      if ($high_prio_reboot and ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) {
+      if $high_prio_reboot and $bool_high_prio_patch_day {
         # Reboot the node first if a reboot is already pending
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
