@@ -211,7 +211,9 @@ else {
   }
 }
 ```
-This will allow `patching_as_code` to keep patch information up to date outside of the change window(s) defined by `puppetlabs/change_window`, and only perform regular patch runs when inside those change window(s). If you don't put any patches on the `high_priority_list`, running with `high_priority_only => true` will cause nothing to happen. Conversely, if you do need a high priority patch to be deployed, running with `high_priority_only => true` will allow those high priority patches to be installed. Use the patch schedule capabilities of `patching_as_code` to control when high priority patches are allowed to be installed, as documented above.
+This will allow `patching_as_code` to keep patch information up to date outside of the change window(s) defined by `puppetlabs/change_window`, and only perform regular patch runs when inside those change window(s). If you don't put any patches on the `high_priority_list`, running with `high_priority_only => true` will cause nothing to happen. Conversely, if you do need a high priority patch to be deployed, running with `high_priority_only => true` will allow those high priority patches to be installed. Use the patch schedule capabilities of `patching_as_code` to control when high priority patches are allowed to be installed, as well as whether reboots are allowed to happen at all.
+
+To assist with the use case of combining with `puppetlabs/change_window`, the `high_priority_only => true` setting, when used with a patch schedule that allows reboots, will skip acting on pre-existing pending OS reboots at the start of the patch run. This is to ensure a reboot only occurs after patching and only when at least 1 high priority patch was installed. No changes are made to the system this way unless absolutely necessary because of a high priority patch.
 
 ### Defining situations when patching needs to be skipped
 
