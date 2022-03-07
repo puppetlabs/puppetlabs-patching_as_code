@@ -1,5 +1,6 @@
 ---
 patching_as_code::patch_group: primary
+patching_as_code::high_priority_patch_group: never
 patching_as_code::patch_schedule:
   weekly:
     day_of_week: Thursday
