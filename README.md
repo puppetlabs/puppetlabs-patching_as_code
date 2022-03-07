@@ -2,23 +2,21 @@
 
 #### Table of Contents
 
-- [puppetlabs-patching_as_code](#puppetlabs-patching_as_code)
-      - [Table of Contents](#table-of-contents)
-  - [Description](#description)
-  - [Setup](#setup)
-    - [What this module affects](#what-this-module-affects)
-    - [Setup Requirements](#setup-requirements)
-    - [Beginning with patching_as_code](#beginning-with-patching_as_code)
-  - [Usage](#usage)
-    - [Customizing the patch groups](#customizing-the-patch-groups)
-    - [Controlling which patches get installed](#controlling-which-patches-get-installed)
-    - [Setting a High Priority patch schedule and list](#setting-a-high-priority-patch-schedule-and-list)
-    - [Compatibility with puppetlabs/change_window](#compatibility-with-puppetlabschangewindow)
-    - [Defining situations when patching needs to be skipped](#defining-situations-when-patching-needs-to-be-skipped)
-    - [Managing unsafe processes for patching](#managing-unsafe-processes-for-patching)
-    - [Managing patching over metered links (Windows only)](#managing-patching-over-metered-links-windows-only)
-    - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
-  - [Limitations](#limitations)
+- [Description](#description)
+- [Setup](#setup)
+  - [What this module affects](#what-this-module-affects)
+  - [Setup Requirements](#setup-requirements)
+  - [Beginning with patching_as_code](#beginning-with-patching_as_code)
+- [Usage](#usage)
+  - [Customizing the patch groups](#customizing-the-patch-groups)
+  - [Controlling which patches get installed](#controlling-which-patches-get-installed)
+  - [Setting a High Priority patch schedule and list](#setting-a-high-priority-patch-schedule-and-list)
+  - [Compatibility with puppetlabs/change_window](#compatibility-with-puppetlabschangewindow)
+  - [Defining situations when patching needs to be skipped](#defining-situations-when-patching-needs-to-be-skipped)
+  - [Managing unsafe processes for patching](#managing-unsafe-processes-for-patching)
+  - [Managing patching over metered links (Windows only)](#managing-patching-over-metered-links-windows-only)
+  - [Defining pre/post-patching and pre-reboot commands](#defining-prepost-patching-and-pre-reboot-commands)
+- [Limitations](#limitations)
 
 ## Description
 
@@ -87,7 +85,7 @@ To control which patch group(s) a node belongs to, you need to set the `patch_gr
 It is highly recommended to use Hiera to set the correct value for each node, for example:
 ```yaml
 patching_as_code::patch_group: early
-```yaml
+```
 The module provides 6 patch groups out of the box:
 ```yaml
 weekly:    patches each Thursday of the month, between 09:00 and 11:00, performs a reboot if needed
@@ -96,7 +94,7 @@ early:     patches every 3rd Monday   of the month, between 20:00 and 22:00, per
 primary:   patches every 3rd Friday   of the month, between 22:00 and 00:00, performs a reboot if needed
 secondary: patches every 3rd Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
 late:      patches every 4th Saturday of the month, between 22:00 and 00:00, performs a reboot if needed
-```yaml
+```
 There are also 2 special built-in patch groups:
 ```yaml
 always:    patches immediately when a patch is available, can patch in any agent run, performs a reboot if needed
