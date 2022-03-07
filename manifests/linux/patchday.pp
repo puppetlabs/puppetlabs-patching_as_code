@@ -4,6 +4,8 @@
 class patching_as_code::linux::patchday (
   Array $updates,
   Array $choco_updates = [],
+  Array $high_prio_updates = [],
+  Array $high_prio_choco_updates = []
 ) {
 
   case $facts['package_provider'] {
@@ -29,17 +31,35 @@ class patching_as_code::linux::patchday (
     }
   }
 
-  exec { 'Patching as Code - Clean Cache':
-    command  => $cmd,
-    path     => $cmd_path,
-    schedule => 'Patching as Code - Patch Window'
+  if $updates.count > 0 {
+    exec { 'Patching as Code - Clean Cache':
+      command  => $cmd,
+      path     => $cmd_path,
+      schedule => 'Patching as Code - Patch Window'
+    }
+
+    $updates.each | $package | {
+      patch_package { $package:
+        patch_window => 'Patching as Code - Patch Window',
+        chocolatey   => false,
+        require      => Exec['Patching as Code - Clean Cache']
+      }
+    }
   }
 
-  $updates.each | $package | {
-    patch_package { $package:
-      patch_window => 'Patching as Code - Patch Window',
-      chocolatey   => false,
-      require      => Exec['Patching as Code - Clean Cache']
+  if $high_prio_updates.count > 0 {
+    exec { 'Patching as Code - Clean Cache (High Priority)':
+      command  => $cmd,
+      path     => $cmd_path,
+      schedule => 'Patching as Code - High Priority Patch Window'
+    }
+
+    $high_prio_updates.each | $package | {
+      patch_package { $package:
+        patch_window => 'Patching as Code - High Priority Patch Window',
+        chocolatey   => false,
+        require      => Exec['Patching as Code - Clean Cache (High Priority)']
+      }
     }
   }
 

@@ -99,6 +99,9 @@ class patching_as_code(
   Array                         $allowlist,
   Array                         $blocklist_choco,
   Array                         $allowlist_choco,
+  String                        $high_priority_patch_group,
+  Array                         $high_priority_list,
+  Array                         $high_priority_list_choco,
   Array                         $unsafe_process_list,
   Hash                          $pre_patch_commands,
   Hash                          $post_patch_commands,
@@ -107,6 +110,7 @@ class patching_as_code(
   Optional[String]              $plan_patch_fact = undef,
   Optional[Boolean]             $enable_patching = true,
   Optional[Boolean]             $security_only = false,
+  Optional[Boolean]             $high_priority_only = false,
   Optional[Boolean]             $patch_choco = false,
   Optional[Boolean]             $use_pe_patch = true,
   Optional[Boolean]             $classify_pe_patch = false,
@@ -125,6 +129,12 @@ class patching_as_code(
       fail("Patch group ${pg} is not valid as no associated schedule was found!
       Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
     }
+  }
+
+  # Verify if the $high_priority_patch_group points to a valid patch schedule
+  unless $patch_schedule[$high_priority_patch_group] or $high_priority_patch_group in ['always', 'never'] {
+    fail("High Priority Patch group ${high_priority_patch_group} is not valid as no associated schedule was found!
+    Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
   }
 
   # Verify the puppet_confdir from the puppetlabs/puppet_agent module is present
@@ -191,48 +201,13 @@ class patching_as_code(
     ensure_packages('yum-utils')
   }
 
-  # Determine if today is Patch Day for this node's $patch_groups
-  if 'never' in $patch_groups {
-    $bool_patch_day = false
-    schedule { 'Patching as Code - Patch Window':
-      period => 'never',
-    }
-    $_reboot = 'never'
-    $active_pg = 'never'
-  } elsif 'always' in $patch_groups {
-    $bool_patch_day = true
-    schedule { 'Patching as Code - Patch Window':
-      range  => '00:00 - 23:59',
-      repeat => 1440
-    }
-    $_reboot = 'ifneeded'
-    $active_pg = 'always'
-  } else {
-    $pg_info = $patch_groups.map |$pg| {
-      {
-        'name'         => $pg,
-        'is_patch_day' => patching_as_code::is_patchday(
-                            $patch_schedule[$pg]['day_of_week'],
-                            $patch_schedule[$pg]['count_of_week'],
-                            $pg
-                          )
-      }
-    }
-    $active_pg = $pg_info.reduce(undef) |$memo, $value| {
-      if $value['is_patch_day'] == true { $value['name'] } else { $memo }
-    }
-    $bool_patch_day = type($active_pg,'generalized') ? {
-      Type[String] => true,
-      default => false
-    }
-    if $bool_patch_day {
-      schedule { 'Patching as Code - Patch Window':
-        range  => $patch_schedule[$active_pg]['hours'],
-        repeat => $patch_schedule[$active_pg]['max_runs']
-      }
-      $_reboot = $patch_schedule[$active_pg]['reboot']
-    }
-  }
+  # Determine if today is Patch Day for this node's $patch_groups and $high_priority_patch_group
+  $result = patching_as_code::process_patch_groups()
+  $bool_patch_day           = $result['is_patch_day']
+  $_reboot                  = $result['reboot']
+  $_high_prio_reboot        = $result['high_prio_reboot']
+  $active_pg                = $result['active_pg']
+  $bool_high_prio_patch_day = $result['is_high_prio_patch_day']
 
   # Write local state file for config reporting and reuse in plans
   file { 'patching_configuration.json':
@@ -240,53 +215,85 @@ class patching_as_code(
     path      => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
     content   => to_json_pretty({
       patching_as_code_config => {
-        allowlist              => $allowlist,
-        blocklist              => $blocklist,
-        allowlist_choco        => $allowlist_choco,
-        blocklist_choco        => $blocklist_choco,
-        enable_patching        => $enable_patching,
-        patch_fact             => $patch_fact,
-        patch_group            => $patch_groups,
-        patch_schedule         => if $active_pg in ['always', 'never'] {
+        allowlist                 => $allowlist,
+        blocklist                 => $blocklist,
+        high_priority_list        => $high_priority_list,
+        allowlist_choco           => $allowlist_choco,
+        blocklist_choco           => $blocklist_choco,
+        high_priority_list_choco  => $high_priority_list_choco,
+        enable_patching           => $enable_patching,
+        patch_fact                => $patch_fact,
+        patch_group               => $patch_groups,
+        patch_schedule            => if $active_pg in ['always', 'never'] {
                                     { $active_pg => 'N/A' }
                                   } else {
                                     $patch_schedule.filter |$item| { $item[0] in $patch_groups }
                                   },
-        post_patch_commands    => $post_patch_commands,
-        pre_patch_commands     => $pre_patch_commands,
-        pre_reboot_commands    => $pre_reboot_commands,
-        patch_on_metered_links => $patch_on_metered_links,
-        security_only          => $security_only,
-        patch_choco            => $patch_choco,
-        unsafe_process_list    => $unsafe_process_list,
+        high_priority_patch_group => $high_priority_patch_group,
+        post_patch_commands       => $post_patch_commands,
+        pre_patch_commands        => $pre_patch_commands,
+        pre_reboot_commands       => $pre_reboot_commands,
+        patch_on_metered_links    => $patch_on_metered_links,
+        security_only             => $security_only,
+        patch_choco               => $patch_choco,
+        unsafe_process_list       => $unsafe_process_list,
       }
     }, false),
     show_diff => false
   }
 
-  if $bool_patch_day {
+  if $bool_patch_day or $bool_high_prio_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
-        'windows' =>  if $security_only == true {
+        'windows' =>  if $bool_patch_day and $security_only and !$high_priority_only {
                         unless $facts[$patch_fact]['missing_security_kbs'].empty {
                           $facts[$patch_fact]['missing_security_kbs']
                         } else {
                           $facts[$patch_fact]['missing_update_kbs']
                         }
-                      } else {
+                      } elsif $bool_patch_day and !$high_priority_only {
                         $facts[$patch_fact]['missing_update_kbs']
-                      },
-        'Linux'   =>  if $security_only == true {
-                        $facts[$patch_fact]['security_package_updates']
                       } else {
+                        []
+                      },
+        'Linux'   =>  if $bool_patch_day and $security_only and !$high_priority_only{
+                        $facts[$patch_fact]['security_package_updates']
+                      } elsif $bool_patch_day and !$high_priority_only{
                         $facts[$patch_fact]['package_updates']
+                      } else {
+                        []
                       },
         default   => []
       }
       $choco_updates = $facts['kernel'] ? {
-        'windows' =>  if $patch_choco == true {
+        'windows' =>  if $bool_patch_day and $patch_choco and !$high_priority_only {
                         if $facts['patching_as_code_choco'] {
                           $facts['patching_as_code_choco']['packages']
+                        } else {
+                          []
+                        }
+                      } else {
+                        []
+                      },
+        default   => []
+      }
+      $high_prio_updates = $facts['kernel'] ? {
+        'windows' =>  if $bool_high_prio_patch_day {
+                        $facts[$patch_fact]['missing_update_kbs'].filter |$item| { $item in $high_priority_list }
+                      } else {
+                        []
+                      },
+        'Linux'   =>  if $bool_high_prio_patch_day {
+                        $facts[$patch_fact]['package_updates'].filter |$item| { $item in $high_priority_list }
+                      } else {
+                        []
+                      },
+        default   => []
+      }
+      $high_prio_updates_choco = $facts['kernel'] ? {
+        'windows' =>  if $bool_high_prio_patch_day and $patch_choco == true {
+                        if $facts['patching_as_code_choco'] {
+                          $facts['patching_as_code_choco']['packages'].filter |$item| { $item in $high_priority_list_choco }
                         } else {
                           []
                         }
@@ -299,25 +306,51 @@ class patching_as_code(
     else {
       $available_updates = []
       $choco_updates = []
+      $high_prio_updates = []
+      $high_prio_updates_choco = []
     }
 
     case $allowlist.count {
       0: {
-        $updates_to_install       = $available_updates.filter |$item| { !($item in $blocklist) }
+        $_updates_to_install          = $available_updates.filter |$item| { !($item in $blocklist) }
+        $high_prio_updates_to_install = $high_prio_updates.filter |$item| { !($item in $blocklist) }
+        if ($bool_patch_day and $bool_high_prio_patch_day) {
+          $updates_to_install = $_updates_to_install.filter |$item| { !($item in $high_prio_updates_to_install) }
+        } else {
+          $updates_to_install = $_updates_to_install
+        }
       }
       default: {
-        $whitelisted_updates       =         $available_updates.filter |$item| { $item in $allowlist }
-        $updates_to_install        =       $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $whitelisted_updates          =   $available_updates.filter |$item| { $item in $allowlist }
+        $_updates_to_install          = $whitelisted_updates.filter |$item| { !($item in $blocklist) }
+        $high_prio_updates_to_install =   $high_prio_updates.filter |$item| { !($item in $blocklist) }
+        if ($bool_patch_day and $bool_high_prio_patch_day) {
+          $updates_to_install = $_updates_to_install.filter |$item| { !($item in $high_prio_updates_to_install) }
+        } else {
+          $updates_to_install = $_updates_to_install
+        }
       }
     }
 
     case $allowlist_choco.count {
       0: {
-        $choco_updates_to_install =     $choco_updates.filter |$item| { !($item in $blocklist_choco) }
+        $_choco_updates_to_install          =           $choco_updates.filter |$item| { !($item in $blocklist_choco) }
+        $high_prio_choco_updates_to_install = $high_prio_updates_choco.filter |$item| { !($item in $blocklist_choco) }
+        if ($bool_patch_day and $bool_high_prio_patch_day) {
+          $choco_updates_to_install = $_choco_updates_to_install.filter |$item| { !($item in $high_prio_choco_updates_to_install) }
+        } else {
+          $choco_updates_to_install = $_choco_updates_to_install
+        }
       }
       default: {
-        $whitelisted_choco_updates =             $choco_updates.filter |$item| { $item in $allowlist_choco }
-        $choco_updates_to_install  = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist_choco) }
+        $whitelisted_choco_updates          =             $choco_updates.filter |$item| { $item in $allowlist_choco }
+        $_choco_updates_to_install          = $whitelisted_choco_updates.filter |$item| { !($item in $blocklist_choco) }
+        $high_prio_choco_updates_to_install =   $high_prio_updates_choco.filter |$item| { !($item in $blocklist_choco) }
+        if ($bool_patch_day and $bool_high_prio_patch_day) {
+          $choco_updates_to_install = $_choco_updates_to_install.filter |$item| { !($item in $high_prio_choco_updates_to_install) }
+        } else {
+          $choco_updates_to_install = $_choco_updates_to_install
+        }
       }
     }
 
@@ -331,8 +364,19 @@ class patching_as_code(
       'ifneeded': {true}
       default:    {false}
     }
-    if $reboot and $enable_patching {
-      # Reboot the node first if a reboot is already pending
+    $high_prio_reboot = case $_high_prio_reboot {
+      'always':   {true}
+      'never':    {false}
+      'ifneeded': {true}
+      default:    {false}
+    }
+    $high_prio_reboot_if_needed = case $_high_prio_reboot {
+      'ifneeded': {true}
+      default:    {false}
+    }
+
+    if $reboot and $enable_patching and !$high_priority_only {
+      # Reboot the node first if a reboot is already pending, except if this is a high prio only run
       case $facts['kernel'].downcase() {
         /(windows|linux)/: {
           reboot_if_pending {'Patching as Code':
@@ -347,17 +391,31 @@ class patching_as_code(
     }
     anchor {'patching_as_code::start':}
 
-    if ($updates_to_install.count + $choco_updates_to_install.count > 0) and ($enable_patching == true) {
+    if ($updates_to_install.count + $choco_updates_to_install.count +
+    $high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and
+    ($enable_patching == true) {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
             # Run pre-patch commands if provided
-            $pre_patch_commands.each | $cmd, $cmd_opts | {
-              exec { "Patching as Code - Before patching - ${cmd}":
-                *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
-                before   => Class["patching_as_code::${0}::patchday"],
-                schedule => 'Patching as Code - Patch Window',
-                tag      => ['patching_as_code_pre_patching']
+            if ($updates_to_install.count + $choco_updates_to_install.count > 0) {
+              $pre_patch_commands.each | $cmd, $cmd_opts | {
+                exec { "Patching as Code - Before patching - ${cmd}":
+                  *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
+                  before   => Class["patching_as_code::${0}::patchday"],
+                  schedule => 'Patching as Code - Patch Window',
+                  tag      => ['patching_as_code_pre_patching']
+                }
+              }
+            }
+            if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
+              $pre_patch_commands.each | $cmd, $cmd_opts | {
+                exec { "Patching as Code - Before patching (High Priority) - ${cmd}":
+                  *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
+                  before   => Class["patching_as_code::${0}::patchday"],
+                  schedule => 'Patching as Code - High Priority Patch Window',
+                  tag      => ['patching_as_code_pre_patching']
+                }
               }
             }
             # Perform main patching run
@@ -366,36 +424,76 @@ class patching_as_code(
               false => Exec["${patch_fact}::exec::fact"]
             }
             class { "patching_as_code::${0}::patchday":
-              updates       => $updates_to_install.unique,
-              choco_updates => $choco_updates_to_install.unique,
-              require       => Anchor['patching_as_code::start']
+              updates                 => $updates_to_install.unique,
+              choco_updates           => $choco_updates_to_install.unique,
+              high_prio_updates       => $high_prio_updates_to_install.unique,
+              high_prio_choco_updates => $high_prio_choco_updates_to_install.unique,
+              require                 => Anchor['patching_as_code::start']
             } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
               ensure => directory
             } -> file {'Patching as Code - Save Patch Run Info':
               ensure    => file,
               path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
               show_diff => false,
-              content   => Deferred('patching_as_code::last_run',[$updates_to_install, $choco_updates_to_install]),
+              content   => Deferred('patching_as_code::last_run',[
+                $updates_to_install,
+                $choco_updates_to_install
+              ]),
+              schedule  => 'Patching as Code - Patch Window',
+            } -> file {'Patching as Code - Save High Priority Patch Run Info':
+              ensure    => file,
+              path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
+              show_diff => false,
+              content   => Deferred('patching_as_code::high_prio_last_run',[
+                $high_prio_updates_to_install,
+                $high_prio_choco_updates_to_install
+              ]),
+              schedule  => 'Patching as Code - High Priority Patch Window',
             } -> notify {'Patching as Code - Update Fact':
               message  => 'Patches installed, refreshing patching facts...',
               notify   => $patch_refresh_actions,
               schedule => 'Patching as Code - Patch Window',
+            } -> notify {'Patching as Code - Update Fact (High Priority)':
+              message  => 'Patches installed, refreshing patching facts...',
+              notify   => $patch_refresh_actions,
+              schedule => 'Patching as Code - High Priority Patch Window',
             }
-            if $reboot {
+            if $reboot or $high_prio_reboot {
               # Reboot after patching (in later patch_reboot stage)
-              class { 'patching_as_code::reboot':
-                reboot_if_needed => $reboot_if_needed,
-                schedule         => 'Patching as Code - Patch Window',
-                stage            => patch_reboot
+              if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
+                class { 'patching_as_code::reboot':
+                  reboot_if_needed => $reboot_if_needed,
+                  schedule         => 'Patching as Code - Patch Window',
+                  stage            => patch_reboot
+                }
+              }
+              if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
+                class { 'patching_as_code::high_prio_reboot':
+                  reboot_if_needed => $reboot_if_needed,
+                  schedule         => 'Patching as Code - High Priority Patch Window',
+                  stage            => patch_reboot
+                }
               }
               # Perform post-patching Execs
-              $post_patch_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - After patching - ${cmd}":
-                  *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_post_patching']
-                } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+              if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching - ${cmd}":
+                    *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - Patch Window',
+                    tag      => ['patching_as_code_post_patching']
+                  } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+                }
+              }
+              if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching (High Priority) - ${cmd}":
+                    *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - High Priority Patch Window',
+                    tag      => ['patching_as_code_post_patching']
+                  } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
+                }
               }
               # Define pre-reboot Execs
               case $facts['kernel'].downcase() {
@@ -417,24 +515,50 @@ class patching_as_code(
                   fail('Unsupported operating system for Patching as Code!')
                 }
               }
-              $pre_reboot_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - Before reboot - ${cmd}":
-                  *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
-                  provider => $reboot_logic_provider,
-                  onlyif   => $reboot_logic_onlyif,
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_pre_reboot']
+              if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
+                $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - Before reboot - ${cmd}":
+                    *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
+                    provider => $reboot_logic_provider,
+                    onlyif   => $reboot_logic_onlyif,
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - Patch Window',
+                    tag      => ['patching_as_code_pre_reboot']
+                  }
+                }
+              }
+              if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
+                $pre_reboot_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - Before reboot (High Priority) - ${cmd}":
+                    *        => delete($cmd_opts, ['provider', 'onlyif', 'unless', 'require', 'before', 'schedule', 'tag']),
+                    provider => $reboot_logic_provider,
+                    onlyif   => $reboot_logic_onlyif,
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - High Priority Patch Window',
+                    tag      => ['patching_as_code_pre_reboot']
+                  }
                 }
               }
             } else {
               # Do not reboot after patching, just run post_patch commands if given
-              $post_patch_commands.each | $cmd, $cmd_opts | {
-                exec { "Patching as Code - After patching - ${cmd}":
-                  *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
-                  require  => Class["patching_as_code::${0}::patchday"],
-                  schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_post_patching']
+              if ($updates_to_install.count + $choco_updates_to_install.count > 0) {
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching - ${cmd}":
+                    *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - Patch Window',
+                    tag      => ['patching_as_code_post_patching']
+                  }
+                }
+              }
+              if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
+                $post_patch_commands.each | $cmd, $cmd_opts | {
+                  exec { "Patching as Code - After patching (High Priority)- ${cmd}":
+                    *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
+                    require  => Class["patching_as_code::${0}::patchday"],
+                    schedule => 'Patching as Code - High Priority Patch Window',
+                    tag      => ['patching_as_code_post_patching']
+                  }
                 }
               }
             }
