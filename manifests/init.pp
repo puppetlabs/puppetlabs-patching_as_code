@@ -375,17 +375,34 @@ class patching_as_code(
       default:    {false}
     }
 
-    if $reboot and $enable_patching and !$high_priority_only {
-      # Reboot the node first if a reboot is already pending, except if this is a high prio only run
-      case $facts['kernel'].downcase() {
-        /(windows|linux)/: {
-          reboot_if_pending {'Patching as Code':
-            patch_window => 'Patching as Code - Patch Window',
-            os           => $0
+    # Perform pending reboots pre-patching, except if this is a high prio only run
+    if $enable_patching and !$high_priority_only {
+      if ($reboot and ($updates_to_install.count + $choco_updates_to_install.count > 0)) {
+        # Reboot the node first if a reboot is already pending
+        case $facts['kernel'].downcase() {
+          /(windows|linux)/: {
+            reboot_if_pending {'Patching as Code':
+              patch_window => 'Patching as Code - Patch Window',
+              os           => $0
+            }
+          }
+          default: {
+            fail('Unsupported operating system for Patching as Code!')
           }
         }
-        default: {
-          fail('Unsupported operating system for Patching as Code!')
+      }
+      if ($high_prio_reboot and ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) {
+        # Reboot the node first if a reboot is already pending
+        case $facts['kernel'].downcase() {
+          /(windows|linux)/: {
+            reboot_if_pending {'Patching as Code High Priority':
+              patch_window => 'Patching as Code - High Priority Patch Window',
+              os           => $0
+            }
+          }
+          default: {
+            fail('Unsupported operating system for Patching as Code!')
+          }
         }
       }
     }
