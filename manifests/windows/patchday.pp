@@ -17,6 +17,14 @@ class patching_as_code::windows::patchday (
     }
   }
 
+  notify {'List of high prio patches received':
+    message => "${high_prio_updates}"
+  }
+
+  notify {'Count of high prio patches received':
+    message => "${high_prio_updates.count}"
+  }
+
   if $high_prio_updates.count > 0 {
     $updates.each | $kb | {
       patching_as_code::kb { $kb:
