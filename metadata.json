@@ -1,6 +1,6 @@
 {
   "name": "puppetlabs-patching_as_code",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "puppetlabs",
   "summary": "Automated patching through desired state code",
   "license": "Apache-2.0",
