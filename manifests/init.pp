@@ -451,9 +451,6 @@ class patching_as_code(
               true  => [ Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"] ],
               false => Exec["${patch_fact}::exec::fact"]
             }
-            notify {'List of high prio patches':
-              message => "${high_prio_updates_to_install}"
-            }
             if ($updates_to_install.count + $choco_updates_to_install.count +
             $high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
               class { "patching_as_code::${0}::patchday":
