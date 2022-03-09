@@ -17,16 +17,8 @@ class patching_as_code::windows::patchday (
     }
   }
 
-  notify {'List of high prio patches received':
-    message => "${high_prio_updates}"
-  }
-
-  notify {'Count of high prio patches received':
-    message => "${high_prio_updates.count}"
-  }
-
   if $high_prio_updates.count > 0 {
-    $updates.each | $kb | {
+    $high_prio_updates.each | $kb | {
       patching_as_code::kb { $kb:
         ensure      => 'present',
         maintwindow => 'Patching as Code - High Priority Patch Window'
