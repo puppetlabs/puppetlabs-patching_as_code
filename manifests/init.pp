@@ -470,8 +470,8 @@ class patching_as_code(
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
                 show_diff => false,
                 content   => Deferred('patching_as_code::last_run',[
-                  $updates_to_install,
-                  $choco_updates_to_install
+                  $updates_to_install.unique,
+                  $choco_updates_to_install.unique
                 ]),
                 schedule  => 'Patching as Code - Patch Window',
                 require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
@@ -489,8 +489,8 @@ class patching_as_code(
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
                 show_diff => false,
                 content   => Deferred('patching_as_code::high_prio_last_run',[
-                  $high_prio_updates_to_install,
-                  $high_prio_choco_updates_to_install
+                  $high_prio_updates_to_install.unique,
+                  $high_prio_choco_updates_to_install.unique
                 ]),
                 schedule  => 'Patching as Code - High Priority Patch Window',
                 require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
