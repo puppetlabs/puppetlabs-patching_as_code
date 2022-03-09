@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 **Bugfixes**
 - Fixes a bug that caused High Priority OS patches for Windows not to be installed, due to the wrong variable being used.
 
+**Improvements**
+- Deduplicates the list of installed patches on the last run, reported in the `patching_as_code` fact.
+
 ## Release 1.1.1
 
 **Improvements**
