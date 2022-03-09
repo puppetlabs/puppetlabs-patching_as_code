@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.1.2
+
+**Bugfixes**
+- Fixes a bug that caused High Priority OS patches for Windows not to be installed, due to the wrong variable being used.
+
 ## Release 1.1.1
 
 **Improvements**
