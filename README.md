@@ -1,5 +1,9 @@
 # puppetlabs-patching_as_code
 
+> This module is supported by the Puppet community. We expect it to be of the same high
+> quality as our own Supported modules, but it does not qualify for Puppet Support plans.
+> See the `CODEOWNERS` file for usernames of the maintainers.
+
 #### Table of Contents
 
 - [Description](#description)
@@ -274,7 +278,7 @@ Here's another example, this time for a pre-patch powershell command on Windows:
 ```yaml
 patching_as_code::pre_patch_commands:
   shutdown SQL server:
-    command: Stop-Service MSSQLSERVER -Force 
+    command: Stop-Service MSSQLSERVER -Force
     provider: powershell
 ```
 As you can see, it's just like defining `Exec` resources.
