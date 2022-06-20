@@ -39,6 +39,8 @@ function patching_as_code::process_patch_groups(
         repeat => $patching_as_code::patch_schedule[$active_pg]['max_runs']
       }
       $reboot = $patching_as_code::patch_schedule[$active_pg]['reboot']
+    } else {
+      $reboot = 'never'
     }
   }
 
@@ -67,6 +69,8 @@ function patching_as_code::process_patch_groups(
         repeat => $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['max_runs']
       }
       $high_prio_reboot = $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['reboot']
+    } else {
+      $high_prio_reboot = 'never'
     }
   }
 
