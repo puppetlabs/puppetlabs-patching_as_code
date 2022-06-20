@@ -269,9 +269,9 @@ class patching_as_code(
                         []
                       },
         'Linux'   =>  if $bool_patch_day and $security_only and !$high_priority_only{
-                        $facts[$patch_fact]['security_package_updates']
+                        patching_as_code::dedupe_arch($facts[$patch_fact]['security_package_updates'])
                       } elsif $bool_patch_day and !$high_priority_only{
-                        $facts[$patch_fact]['package_updates']
+                        patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'])
                       } else {
                         []
                       },
@@ -296,7 +296,7 @@ class patching_as_code(
                         []
                       },
         'Linux'   =>  if $bool_high_prio_patch_day {
-                        $facts[$patch_fact]['package_updates'].filter |$item| { $item in $high_priority_list }
+                        patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'].filter |$item| { $item in $high_priority_list })
                       } else {
                         []
                       },

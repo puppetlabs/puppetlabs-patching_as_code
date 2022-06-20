@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.1.3
+
+**Bugfixes**
+- No longer logs `Puppet Unknown variable: 'reboot'` on runs outside of the patch day.
+
+**Improvements**
+- Correctly handles multi-architecture package updates, e.g. when there is an update for both the `i686` and `x86_64` version of a package.
+
 ## Release 1.1.2
 
 **Bugfixes**
