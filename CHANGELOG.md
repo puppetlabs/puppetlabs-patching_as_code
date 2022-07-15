@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.1.4
+
+**Improvements**
+- Added support for matching against full process arguments for the `patching_as_code::unsafe_process_list`.
+
 ## Release 1.1.3
 
 **Bugfixes**
