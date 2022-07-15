@@ -241,7 +241,7 @@ If you need to match on a specific process including its arguments, prepend the 
 ```yaml
 patching_as_code::unsafe_process_list:
   - application1
-  - {full} /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
+  - '{full} /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers'
 ```
 You can have whitespace between `{full}` and the process value for sake of readability, this will be automatically stripped before the matching happens.
 
