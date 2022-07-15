@@ -237,6 +237,14 @@ patching_as_code::unsafe_process_list:
 
 This works on both Linux and Windows, and the matching is done case-insensitive. If one process from the `unsafe_process_list` is found as an active process, patching will be skipped.
 
+If you need to match on a specific process including its arguments, prepend the entry with `{full}`:
+```yaml
+patching_as_code::unsafe_process_list:
+  - application1
+  - '{full} /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers'
+```
+You can have whitespace between `{full}` and the process value for sake of readability, this will be automatically stripped before the matching happens.
+
 ### Managing patching over metered links (Windows only)
 
 By default, this module will not perform patching over metered links (e.g. 3G/4G connections). You can control this behavior through the `patch_on_metered_links` parameter. To force patching to occur even over metered links, either define this value in Hiera:
