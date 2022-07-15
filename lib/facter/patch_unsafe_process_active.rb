@@ -39,6 +39,6 @@ Facter.add('patch_unsafe_process_active') do
         break
       end
     end
-    puts result
+    result
   end
 end
