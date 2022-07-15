@@ -4,8 +4,7 @@ Facter.add('patch_unsafe_process_active') do
   confine { Facter.value(:kernel) == 'windows' || Facter.value(:kernel) == 'Linux' }
   setcode do
     def process_running(processname, full = false)
-      kernel = 'Linux'
-      case kernel
+      case Facter.value(:kernel)
       when 'windows'
         if full
           tasklist = `wmic path win32_process get Commandline`.downcase
