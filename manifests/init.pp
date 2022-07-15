@@ -46,6 +46,7 @@
 #   List of Chocolatey updates to install on the patch schedule set by `$high_priority_patch_group`.
 # @param [Array] unsafe_process_list
 #   List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
+#   Prepend an entry with `{full}` to match against the full process arguments.
 # @param [Hash] pre_patch_commands
 #   Hash of command to run before patching
 # @option pre_patch_commands [String] :command

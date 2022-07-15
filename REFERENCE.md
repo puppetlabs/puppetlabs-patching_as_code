@@ -110,6 +110,7 @@ List of Chocolatey updates to install on the patch schedule set by `$high_priori
 Data type: `Array`
 
 List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
+Prepend an entry with `{full}` to match against the full process arguments.
 
 ##### `pre_patch_commands`
 
