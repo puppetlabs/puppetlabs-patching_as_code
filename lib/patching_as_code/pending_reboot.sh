@@ -1,7 +1,7 @@
 if [ -f '/usr/bin/needs-restarting' ]
 then
   case $(facter os.release.major) in
-    7|8)
+    7|8|9)
       /usr/bin/needs-restarting -r 2>/dev/null 1>/dev/null
       if [ $? -eq 1 ]
       then
