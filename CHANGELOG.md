@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.1.5
+
+**Improvements**
+- Added support for RHEL 9 in the reboot detection script.
+
 ## Release 1.1.4
 
 **Improvements**
