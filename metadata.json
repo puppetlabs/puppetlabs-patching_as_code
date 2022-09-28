@@ -102,7 +102,7 @@
       "version_requirement": ">= 6.0.0 < 8.0.0"
     }
   ],
-  "pdk-version": "2.0.0",
-  "template-url": "pdk-default#2.0.0",
-  "template-ref": "tags/2.0.0-0-ge838f1d"
+  "pdk-version": "2.3.0",
+  "template-url": "pdk-default#2.3.0",
+  "template-ref": "tags/2.3.0-0-g8aaceff"
 }
