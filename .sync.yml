@@ -1,0 +1,10 @@
+.github/workflows/auto_release.yml:
+  unmanaged: false
+.github/workflows/release.yml:
+  unmanaged: false
+
+Gemfile:
+   optional:
+     ':development':
+       - gem: 'github_changelog_generator'
+
