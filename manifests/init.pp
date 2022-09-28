@@ -20,7 +20,7 @@
 # @param [Hash] patch_schedule
 #   Hash of available patch_schedules. Default schedules are in /data/common.yaml of this module
 # @option patch_schedule [String] :day_of_week
-#   Day of the week to patch, valid options: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+#   Day of the week to patch, valid options: 'Any', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 # @option patch_schedule [Variant[Integer,Array[Integer]]] :count_of_week
 #   Which week(s) in the month to patch, use number(s) between 1 and 5
 # @option patch_schedule [String] :hours
@@ -71,6 +71,7 @@
 #   (optional) The path for the command
 # @option pre_reboot_commands [String] :provider
 #   (optional) The provider for the command
+#   Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 # @param [Optional[Boolean]] fact_upload
 #   How os_patching/pe_patch handles changes to fact cache. Defaults to true.
 #   When true (default), `puppet fact upload` occurs as expected
@@ -78,12 +79,12 @@
 # @param [Optional[String]] plan_patch_fact
 #   Reserved parameter for running `patching_as_code` via a Plan (future functionality).
 # @param [Optional[Boolean]] enable_patching
-#   Controls if `patching_as_code` is allowed to install any updates.
+#   Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
 #   Can be used to disable patching with a single override.
 # @param [Optional[Boolean]] security_only
 #   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
 #   When using `os_patching`, security updates can only be applied to Linux.
-#   If patching of Chocolatey packages is enabled, those packages will still update even if
+#   If patching of Chocolatey packages is enabled, Chocolatey packages will still update even if
 #   `security_only` is set to `true`.
 # @param [Optional[Boolean]] high_priority_only
 #   Only allow updates from the `$high_priority_list` to be installed. Enabling this option will prevent
