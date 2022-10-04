@@ -1,7 +1,13 @@
 # Class: patching_as_code::high_prio_reboot
 #
-#
-class patching_as_code::high_prio_reboot(
+# @summary
+#   This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
+# @param [Boolean] reboot_if_needed
+#   Only reboot the node if a system reboot is pending. This parameter is passed automatically from init.pp
+# @param [Integer] reboot_delay
+#   Time in seconds to delay the reboot by, defaults to 2 minutes.
+#   To override for patching, specify an alternate value by setting the patching_as_code::high_prio_reboot::reboot_delay parameter in Hiera.
+class patching_as_code::high_prio_reboot (
   Boolean $reboot_if_needed = true,
   Integer $reboot_delay = 120
 ) {
@@ -23,7 +29,7 @@ class patching_as_code::high_prio_reboot(
         fail('Unsupported operating system for Patching as Code!')
       }
     }
-    exec {'Patching as Code - High Priority Patch Reboot':
+    exec { 'Patching as Code - High Priority Patch Reboot':
       command   => $reboot_logic_cmd,
       onlyif    => $reboot_logic_onlyif,
       provider  => $reboot_logic_provider,

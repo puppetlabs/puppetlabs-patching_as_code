@@ -72,42 +72,44 @@
 # @option pre_reboot_commands [String] :provider
 #   (optional) The provider for the command
 #   Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
-# @param [Optional[Boolean]] fact_upload
+# @param [Boolean] fact_upload
 #   How os_patching/pe_patch handles changes to fact cache. Defaults to true.
 #   When true (default), `puppet fact upload` occurs as expected
 #   When false, changes to fact cache are not uploaded
-# @param [Optional[String]] plan_patch_fact
-#   Reserved parameter for running `patching_as_code` via a Plan (future functionality).
-# @param [Optional[Boolean]] enable_patching
+# @param [Boolean] enable_patching
 #   Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
 #   Can be used to disable patching with a single override.
-# @param [Optional[Boolean]] security_only
+# @param [Boolean] security_only
 #   Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
 #   When using `os_patching`, security updates can only be applied to Linux.
 #   If patching of Chocolatey packages is enabled, Chocolatey packages will still update even if
 #   `security_only` is set to `true`.
-# @param [Optional[Boolean]] high_priority_only
+# @param [Boolean] high_priority_only
 #   Only allow updates from the `$high_priority_list` to be installed. Enabling this option will prevent
 #   regular patches from being installed, and will skip a pending reboot at the beginning of the patch
 #   run if a pending reboot is detected. A pending reboot may still happen at the end of the patch run,
 #   as long as the patch schedule set by `$high_priority_patch_group` allows reboots to occur.
-# @param [Optional[Boolean]] use_pe_patch
+# @param [Boolean] patch_choco
+#   Also patch outdated Chocolatey packages (on Windows)
+# @param [Boolean] use_pe_patch
 #   Use the pe_patch module if available (PE 2019.8+). Defaults to true.
-# @param [Optional[Boolean]] classify_pe_patch
+# @param [Boolean] classify_pe_patch
 #   Controls if the pe_patch class (PE 2019.8+) is controlled by this module.
 #   When enabled, this module will classify the node with pe_patch,
 #   and set it's patch_group according to this module's patch_group.
 #   When disabled (default), you can use PE's own "PE Patch Management" groups
 #   to classify nodes with pe_patch. In that case, please make sure you match
 #   the patch_group variable in pe_patch with the patch_group in patching_as_code
-# @param [Optional[Boolean]] patch_on_metered_links
+# @param [Boolean] patch_on_metered_links
 #   Controls if patches are installed when the active network connection is a
 #   metered link. This setting only has affect for Windows operating systems.
 #   When enabled, patching are installed even over a metered link.
 #   When disabled (default), patches are not installed over a metered link.
+# @param [Optional[String]] plan_patch_fact
+#   Reserved parameter for running `patching_as_code` via a Plan (future functionality).
 # 
-class patching_as_code(
-  Variant[String,Array[String]] $patch_group,
+class patching_as_code (
+  Variant[String,Array[String]] $patch_group, #lint:ignore:parameter_documentation
   Hash                          $patch_schedule,
   Array                         $blocklist,
   Array                         $allowlist,
@@ -120,15 +122,15 @@ class patching_as_code(
   Hash                          $pre_patch_commands,
   Hash                          $post_patch_commands,
   Hash                          $pre_reboot_commands,
-  Optional[Boolean]             $fact_upload = true,
+  Boolean                       $fact_upload = true,
+  Boolean                       $enable_patching = true,
+  Boolean                       $security_only = false,
+  Boolean                       $high_priority_only = false,
+  Boolean                       $patch_choco = false,
+  Boolean                       $use_pe_patch = true,
+  Boolean                       $classify_pe_patch = false,
+  Boolean                       $patch_on_metered_links = false,
   Optional[String]              $plan_patch_fact = undef,
-  Optional[Boolean]             $enable_patching = true,
-  Optional[Boolean]             $security_only = false,
-  Optional[Boolean]             $high_priority_only = false,
-  Optional[Boolean]             $patch_choco = false,
-  Optional[Boolean]             $use_pe_patch = true,
-  Optional[Boolean]             $classify_pe_patch = false,
-  Optional[Boolean]             $patch_on_metered_links = false,
 ) {
   # Create an extra stage to perform the reboot at the very end of the run
   stage { 'patch_reboot': }
@@ -140,15 +142,13 @@ class patching_as_code(
   # Verify if all of $patch_groups point to a valid patch schedule
   $patch_groups.each |$pg| {
     unless $patch_schedule[$pg] or $pg in ['always', 'never'] {
-      fail("Patch group ${pg} is not valid as no associated schedule was found!
-      Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+      fail("Patch group ${pg} is not valid as no associated schedule was found!\nEnsure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.") #lint:ignore:140chars
     }
   }
 
   # Verify if the $high_priority_patch_group points to a valid patch schedule
   unless $patch_schedule[$high_priority_patch_group] or $high_priority_patch_group in ['always', 'never'] {
-    fail("High Priority Patch group ${high_priority_patch_group} is not valid as no associated schedule was found!
-    Ensure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.")
+    fail("High Priority Patch group ${high_priority_patch_group} is not valid as no associated schedule was found!\nEnsure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.") #lint:ignore:140chars
   }
 
   # Verify the puppet_confdir from the puppetlabs/puppet_agent module is present
@@ -160,7 +160,7 @@ class patching_as_code(
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
     ensure    => file,
     content   => $unsafe_process_list.join('\n'),
-    show_diff => false
+    show_diff => false,
   }
 
   # Determine which patching module to use, this won't resolve when running as a plan but that's ok
@@ -211,7 +211,7 @@ class patching_as_code(
   }
 
   # Ensure yum-utils package is installed on RedHat/CentOS for needs-restarting utility
-  if $facts['osfamily'] == 'RedHat' {
+  if $facts['os']['family'] == 'RedHat' {
     ensure_packages('yum-utils')
   }
 
@@ -227,93 +227,93 @@ class patching_as_code(
   file { 'patching_configuration.json':
     ensure    => file,
     path      => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
-    content   => to_json_pretty({
-      patching_as_code_config => {
-        allowlist                 => $allowlist,
-        blocklist                 => $blocklist,
-        high_priority_list        => $high_priority_list,
-        allowlist_choco           => $allowlist_choco,
-        blocklist_choco           => $blocklist_choco,
-        high_priority_list_choco  => $high_priority_list_choco,
-        enable_patching           => $enable_patching,
-        patch_fact                => $patch_fact,
-        patch_group               => $patch_groups,
-        patch_schedule            => if $active_pg in ['always', 'never'] {
-                                    { $active_pg => 'N/A' }
-                                  } else {
-                                    $patch_schedule.filter |$item| { $item[0] in $patch_groups }
-                                  },
-        high_priority_patch_group => $high_priority_patch_group,
-        post_patch_commands       => $post_patch_commands,
-        pre_patch_commands        => $pre_patch_commands,
-        pre_reboot_commands       => $pre_reboot_commands,
-        patch_on_metered_links    => $patch_on_metered_links,
-        security_only             => $security_only,
-        patch_choco               => $patch_choco,
-        unsafe_process_list       => $unsafe_process_list,
-      }
+    content   => to_json_pretty( {
+        patching_as_code_config => {
+          allowlist                 => $allowlist,
+          blocklist                 => $blocklist,
+          high_priority_list        => $high_priority_list,
+          allowlist_choco           => $allowlist_choco,
+          blocklist_choco           => $blocklist_choco,
+          high_priority_list_choco  => $high_priority_list_choco,
+          enable_patching           => $enable_patching,
+          patch_fact                => $patch_fact,
+          patch_group               => $patch_groups,
+          patch_schedule            => if $active_pg in ['always', 'never'] {
+            { $active_pg => 'N/A' }
+          } else {
+            $patch_schedule.filter |$item| { $item[0] in $patch_groups }
+          },
+          high_priority_patch_group => $high_priority_patch_group,
+          post_patch_commands       => $post_patch_commands,
+          pre_patch_commands        => $pre_patch_commands,
+          pre_reboot_commands       => $pre_reboot_commands,
+          patch_on_metered_links    => $patch_on_metered_links,
+          security_only             => $security_only,
+          patch_choco               => $patch_choco,
+          unsafe_process_list       => $unsafe_process_list,
+        },
     }, false),
-    show_diff => false
+    show_diff => false,
   }
 
   if $bool_patch_day or $bool_high_prio_patch_day {
     if $facts[$patch_fact] {
       $available_updates = $facts['kernel'] ? {
-        'windows' =>  if $bool_patch_day and $security_only and !$high_priority_only {
-                        unless $facts[$patch_fact]['missing_security_kbs'].empty {
-                          $facts[$patch_fact]['missing_security_kbs']
-                        } else {
-                          $facts[$patch_fact]['missing_update_kbs']
-                        }
-                      } elsif $bool_patch_day and !$high_priority_only {
-                        $facts[$patch_fact]['missing_update_kbs']
-                      } else {
-                        []
-                      },
-        'Linux'   =>  if $bool_patch_day and $security_only and !$high_priority_only{
-                        patching_as_code::dedupe_arch($facts[$patch_fact]['security_package_updates'])
-                      } elsif $bool_patch_day and !$high_priority_only{
-                        patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'])
-                      } else {
-                        []
-                      },
-        default   => []
+        'windows' => if $bool_patch_day and $security_only and !$high_priority_only {
+          unless $facts[$patch_fact]['missing_security_kbs'].empty {
+            $facts[$patch_fact]['missing_security_kbs']
+          } else {
+            $facts[$patch_fact]['missing_update_kbs']
+          }
+        } elsif $bool_patch_day and !$high_priority_only {
+          $facts[$patch_fact]['missing_update_kbs']
+        } else {
+          []
+        },
+        'Linux' => if $bool_patch_day and $security_only and !$high_priority_only {
+          patching_as_code::dedupe_arch($facts[$patch_fact]['security_package_updates'])
+        } elsif $bool_patch_day and !$high_priority_only {
+          patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'])
+        } else {
+          []
+        },
+        default => []
       }
       $choco_updates = $facts['kernel'] ? {
-        'windows' =>  if $bool_patch_day and $patch_choco and !$high_priority_only {
-                        if $facts['patching_as_code_choco'] {
-                          $facts['patching_as_code_choco']['packages']
-                        } else {
-                          []
-                        }
-                      } else {
-                        []
-                      },
-        default   => []
+        'windows' => if $bool_patch_day and $patch_choco and !$high_priority_only {
+          if $facts['patching_as_code_choco'] {
+            $facts['patching_as_code_choco']['packages']
+          } else {
+            []
+          }
+        } else {
+          []
+        },
+        default => []
       }
       $high_prio_updates = $facts['kernel'] ? {
-        'windows' =>  if $bool_high_prio_patch_day {
-                        $facts[$patch_fact]['missing_update_kbs'].filter |$item| { $item in $high_priority_list }
-                      } else {
-                        []
-                      },
-        'Linux'   =>  if $bool_high_prio_patch_day {
-                        patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'].filter |$item| { $item in $high_priority_list })
-                      } else {
-                        []
-                      },
-        default   => []
+        'windows' => if $bool_high_prio_patch_day {
+          $facts[$patch_fact]['missing_update_kbs'].filter |$item| { $item in $high_priority_list }
+        } else {
+          []
+        },
+        'Linux' => if $bool_high_prio_patch_day {
+          patching_as_code::dedupe_arch($facts[$patch_fact]['package_updates'].filter |$item| { $item in $high_priority_list })
+        } else {
+          []
+        },
+        default => []
       }
       $high_prio_updates_choco = $facts['kernel'] ? {
-        'windows' =>  if $bool_high_prio_patch_day and $patch_choco == true {
-                        if $facts['patching_as_code_choco'] {
-                          $facts['patching_as_code_choco']['packages'].filter |$item| { $item in $high_priority_list_choco }
-                        } else {
-                          []
-                        }
-                      } else {
-                        []
-                      },
+        'windows' => if $bool_high_prio_patch_day and $patch_choco == true {
+          if $facts['patching_as_code_choco'] {
+            $facts['patching_as_code_choco']['packages'].filter |$item| { $item in $high_priority_list_choco }
+          } else {
+            []
+          }
+        } else {
+          []
+        },
         default   => []
       }
     }
@@ -369,24 +369,24 @@ class patching_as_code(
     }
 
     $reboot = case $_reboot {
-      'always':   {true}
-      'never':    {false}
-      'ifneeded': {true}
-      default:    {false}
+      'always':   { true }
+      'never':    { false }
+      'ifneeded': { true }
+      default:    { false }
     }
     $reboot_if_needed = case $_reboot {
-      'ifneeded': {true}
-      default:    {false}
+      'ifneeded': { true }
+      default:    { false }
     }
     $high_prio_reboot = case $_high_prio_reboot {
-      'always':   {true}
-      'never':    {false}
-      'ifneeded': {true}
-      default:    {false}
+      'always':   { true }
+      'never':    { false }
+      'ifneeded': { true }
+      default:    { false }
     }
     $high_prio_reboot_if_needed = case $_high_prio_reboot {
-      'ifneeded': {true}
-      default:    {false}
+      'ifneeded': { true }
+      default:    { false }
     }
 
     # Perform pending reboots pre-patching, except if this is a high prio only run
@@ -395,9 +395,9 @@ class patching_as_code(
         # Reboot the node first if a reboot is already pending
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
-            reboot_if_pending {'Patching as Code':
+            reboot_if_pending { 'Patching as Code':
               patch_window => 'Patching as Code - Patch Window',
-              os           => $0
+              os           => $0,
             }
           }
           default: {
@@ -406,13 +406,13 @@ class patching_as_code(
         }
       }
       if $high_prio_reboot and $bool_high_prio_patch_day and
-      ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0){
+      ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
         # Reboot the node first if a reboot is already pending
         case $facts['kernel'].downcase() {
           /(windows|linux)/: {
-            reboot_if_pending {'Patching as Code High Priority':
+            reboot_if_pending { 'Patching as Code High Priority':
               patch_window => 'Patching as Code - High Priority Patch Window',
-              os           => $0
+              os           => $0,
             }
           }
           default: {
@@ -421,7 +421,7 @@ class patching_as_code(
         }
       }
     }
-    anchor {'patching_as_code::start':}
+    anchor { 'patching_as_code::start': } #lint:ignore:anchor_resource
 
     if $enable_patching == true {
       if (($patch_on_metered_links == true) or (! $facts['metered_link'] == true)) and (! $facts['patch_unsafe_process_active'] == true) {
@@ -434,7 +434,7 @@ class patching_as_code(
                   *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
                   before   => Class["patching_as_code::${0}::patchday"],
                   schedule => 'Patching as Code - Patch Window',
-                  tag      => ['patching_as_code_pre_patching']
+                  tag      => ['patching_as_code_pre_patching'],
                 }
               }
             }
@@ -444,13 +444,13 @@ class patching_as_code(
                   *        => delete($cmd_opts, ['before', 'schedule', 'tag']),
                   before   => Class["patching_as_code::${0}::patchday"],
                   schedule => 'Patching as Code - High Priority Patch Window',
-                  tag      => ['patching_as_code_pre_patching']
+                  tag      => ['patching_as_code_pre_patching'],
                 }
               }
             }
             # Perform main patching run
             $patch_refresh_actions = $fact_upload ? {
-              true  => [ Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"] ],
+              true  => [Exec["${patch_fact}::exec::fact"], Exec["${patch_fact}::exec::fact_upload"]],
               false => Exec["${patch_fact}::exec::fact"]
             }
             if ($updates_to_install.count + $choco_updates_to_install.count +
@@ -461,65 +461,64 @@ class patching_as_code(
                 high_prio_updates       => $high_prio_updates_to_install.unique,
                 high_prio_choco_updates => $high_prio_choco_updates_to_install.unique,
                 require                 => Anchor['patching_as_code::start'],
-                before                  => Anchor['patching_as_code::post']
-              } -> file {"${facts['puppet_vardir']}/../../patching_as_code":
-                ensure => directory
+                before                  => Anchor['patching_as_code::post'],
+              } -> file { "${facts['puppet_vardir']}/../../patching_as_code":
+                ensure => directory,
               }
             }
             if ($updates_to_install.count + $choco_updates_to_install.count > 0) {
-              file {'Patching as Code - Save Patch Run Info':
+              file { 'Patching as Code - Save Patch Run Info':
                 ensure    => file,
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
                 show_diff => false,
                 content   => Deferred('patching_as_code::last_run',[
-                  $updates_to_install.unique,
-                  $choco_updates_to_install.unique
+                    $updates_to_install.unique,
+                    $choco_updates_to_install.unique,
                 ]),
                 schedule  => 'Patching as Code - Patch Window',
                 require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
-                before    => Anchor['patching_as_code::post']
-              } -> notify {'Patching as Code - Update Fact':
+                before    => Anchor['patching_as_code::post'],
+              } -> notify { 'Patching as Code - Update Fact':
                 message  => 'Patches installed, refreshing patching facts...',
                 notify   => $patch_refresh_actions,
                 schedule => 'Patching as Code - Patch Window',
-                before   => Anchor['patching_as_code::post']
+                before   => Anchor['patching_as_code::post'],
               }
             }
             if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) {
-              file {'Patching as Code - Save High Priority Patch Run Info':
+              file { 'Patching as Code - Save High Priority Patch Run Info':
                 ensure    => file,
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
                 show_diff => false,
                 content   => Deferred('patching_as_code::high_prio_last_run',[
-                  $high_prio_updates_to_install.unique,
-                  $high_prio_choco_updates_to_install.unique
+                    $high_prio_updates_to_install.unique,
+                    $high_prio_choco_updates_to_install.unique,
                 ]),
                 schedule  => 'Patching as Code - High Priority Patch Window',
                 require   => File["${facts['puppet_vardir']}/../../patching_as_code"],
-                before    => Anchor['patching_as_code::post']
-              } -> notify {'Patching as Code - Update Fact (High Priority)':
+                before    => Anchor['patching_as_code::post'],
+              } -> notify { 'Patching as Code - Update Fact (High Priority)':
                 message  => 'Patches installed, refreshing patching facts...',
                 notify   => $patch_refresh_actions,
                 schedule => 'Patching as Code - High Priority Patch Window',
-                before   => Anchor['patching_as_code::post']
+                before   => Anchor['patching_as_code::post'],
               }
             }
-            anchor {'patching_as_code::post':}
-            if ($reboot and $bool_patch_day) or ($high_prio_reboot and
-              ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) {
+            anchor { 'patching_as_code::post': } #lint:ignore:anchor_resource
+            if ($reboot and $bool_patch_day) or ($high_prio_reboot and ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0)) { #lint:ignore:140chars
               # Reboot after patching (in later patch_reboot stage)
               if ($updates_to_install.count + $choco_updates_to_install.count > 0) and $reboot {
                 class { 'patching_as_code::reboot':
                   reboot_if_needed => $reboot_if_needed,
                   schedule         => 'Patching as Code - Patch Window',
-                  stage            => patch_reboot
+                  stage            => patch_reboot,
                 }
               }
               if ($high_prio_updates_to_install.count + $high_prio_choco_updates_to_install.count > 0) and $high_prio_reboot {
                 class { 'patching_as_code::high_prio_reboot':
                   reboot_if_needed => $high_prio_reboot_if_needed,
                   schedule         => 'Patching as Code - High Priority Patch Window',
-                  stage            => patch_reboot
+                  stage            => patch_reboot,
                 }
               }
               # Perform post-patching Execs
@@ -529,7 +528,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
-                    tag      => ['patching_as_code_post_patching']
+                    tag      => ['patching_as_code_post_patching'],
                   } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
                 }
               }
@@ -539,7 +538,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['require', 'before', 'schedule', 'tag']),
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
-                    tag      => ['patching_as_code_post_patching']
+                    tag      => ['patching_as_code_post_patching'],
                   } -> Exec <| tag == 'patching_as_code_pre_reboot' |>
                 }
               }
@@ -579,7 +578,7 @@ class patching_as_code(
                     onlyif   => $reboot_logic_onlyif,
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
-                    tag      => ['patching_as_code_pre_reboot']
+                    tag      => ['patching_as_code_pre_reboot'],
                   }
                 }
               }
@@ -591,7 +590,7 @@ class patching_as_code(
                     onlyif   => $reboot_logic_onlyif_high_prio,
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
-                    tag      => ['patching_as_code_pre_reboot']
+                    tag      => ['patching_as_code_pre_reboot'],
                   }
                 }
               }
@@ -603,7 +602,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - Patch Window',
-                    tag      => ['patching_as_code_post_patching']
+                    tag      => ['patching_as_code_post_patching'],
                   }
                 }
               }
@@ -613,7 +612,7 @@ class patching_as_code(
                     *        => delete($cmd_opts, ['require', 'schedule', 'tag']),
                     require  => Anchor['patching_as_code::post'],
                     schedule => 'Patching as Code - High Priority Patch Window',
-                    tag      => ['patching_as_code_post_patching']
+                    tag      => ['patching_as_code_post_patching'],
                   }
                 }
               }
@@ -625,12 +624,10 @@ class patching_as_code(
         }
       } else {
         if $facts['metered_link'] == true {
-          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
-          due to the current network link being metered.")
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} due to the current network link being metered.")
         }
         if $facts['patch_unsafe_process_active'] == true {
-          notice("Puppet is skipping installation of patches on ${trusted['certname']} \
-          because a process is active that is unsafe for patching.")
+          notice("Puppet is skipping installation of patches on ${trusted['certname']} because a process is active that is unsafe for patching.") #lint:ignore:140chars
         }
       }
     }
