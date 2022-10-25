@@ -1,9 +1,18 @@
 # define patching_as_code::kb
+# 
+# @summary
+#   This define gets called by init.pp to install Windows KB patches.
+# @param [String] ensure
+#   When set to 'enabled' or 'present', will allow this resource to be applied. Removing updates is currently not supported.
+# @param [String] kb
+#   Name of the KB patch to install.
+# @param [Optional[String]] maintwindow
+#   Name of the patch window to use for installing the patch.
 define patching_as_code::kb (
-  $ensure      = 'enabled',
-  $kb          = $name,
-  $maintwindow = undef
-){
+  String $ensure                = 'enabled',
+  String $kb                    = $name,
+  Optional[String] $maintwindow = undef
+) {
   require patching_as_code::wu
 
   case $ensure {
@@ -16,7 +25,7 @@ define patching_as_code::kb (
             provider  => 'powershell',
             timeout   => 14400,
             logoutput => true,
-            schedule  => $maintwindow
+            schedule  => $maintwindow,
           }
         }
         default: {
@@ -27,7 +36,7 @@ define patching_as_code::kb (
             provider  => 'powershell',
             timeout   => 14400,
             logoutput => true,
-            schedule  => $maintwindow
+            schedule  => $maintwindow,
           }
         }
       }

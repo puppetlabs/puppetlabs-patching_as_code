@@ -1,5 +1,5 @@
 function patching_as_code::process_patch_groups(
-){
+) {
   if 'never' in $patching_as_code::patch_groups {
     $bool_patch_day = false
     schedule { 'Patching as Code - Patch Window':
@@ -11,7 +11,7 @@ function patching_as_code::process_patch_groups(
     $bool_patch_day = true
     schedule { 'Patching as Code - Patch Window':
       range  => '00:00 - 23:59',
-      repeat => 1440
+      repeat => 1440,
     }
     $reboot = 'ifneeded'
     $active_pg = 'always'
@@ -20,10 +20,10 @@ function patching_as_code::process_patch_groups(
       {
         'name'         => $pg,
         'is_patch_day' => patching_as_code::is_patchday(
-                            $patching_as_code::patch_schedule[$pg]['day_of_week'],
-                            $patching_as_code::patch_schedule[$pg]['count_of_week'],
-                            $pg
-                          )
+          $patching_as_code::patch_schedule[$pg]['day_of_week'],
+          $patching_as_code::patch_schedule[$pg]['count_of_week'],
+          $pg
+        )
       }
     }
     $active_pg = $pg_info.reduce(undef) |$memo, $value| {
@@ -36,7 +36,7 @@ function patching_as_code::process_patch_groups(
     if $bool_patch_day {
       schedule { 'Patching as Code - Patch Window':
         range  => $patching_as_code::patch_schedule[$active_pg]['hours'],
-        repeat => $patching_as_code::patch_schedule[$active_pg]['max_runs']
+        repeat => $patching_as_code::patch_schedule[$active_pg]['max_runs'],
       }
       $reboot = $patching_as_code::patch_schedule[$active_pg]['reboot']
     } else {
@@ -54,7 +54,7 @@ function patching_as_code::process_patch_groups(
     $bool_high_prio_patch_day = true
     schedule { 'Patching as Code - High Priority Patch Window':
       range  => '00:00 - 23:59',
-      repeat => 1440
+      repeat => 1440,
     }
     $high_prio_reboot = 'ifneeded'
   } else {
@@ -66,7 +66,7 @@ function patching_as_code::process_patch_groups(
     if $bool_high_prio_patch_day {
       schedule { 'Patching as Code - High Priority Patch Window':
         range  => $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['hours'],
-        repeat => $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['max_runs']
+        repeat => $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['max_runs'],
       }
       $high_prio_reboot = $patching_as_code::patch_schedule[$patching_as_code::high_priority_patch_group]['reboot']
     } else {
