@@ -547,22 +547,22 @@ class patching_as_code (
                 'windows': {
                   $reboot_logic_provider = 'powershell'
                   $reboot_logic_onlyif   = $reboot_if_needed ? {
-                    true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
+                    true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1",
                     false => undef
                   }
                   $reboot_logic_onlyif_high_prio = $high_prio_reboot_if_needed ? {
-                    true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1 | findstr -i True",
+                    true  => "${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.ps1",
                     false => undef
                   }
                 }
                 'linux': {
                   $reboot_logic_provider = 'posix'
                   $reboot_logic_onlyif   = $reboot_if_needed ? {
-                    true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
+                    true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh",
                     false => undef
                   }
                   $reboot_logic_onlyif_high_prio = $high_prio_reboot_if_needed ? {
-                    true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh | grep true",
+                    true  => "/bin/sh ${facts['puppet_vardir']}/lib/patching_as_code/pending_reboot.sh",
                     false => undef
                   }
                 }
