@@ -16,5 +16,5 @@ try {
 }
 catch { }
 
-# return result based on exitcode (True means reboot needed, False means no reboot needed)
-return $rebootPending 
+# return result based on exitcode (0 means reboot needed, 1 means no reboot needed)
+if ($rebootPending) { exit 0 } else { exit 1 } 
