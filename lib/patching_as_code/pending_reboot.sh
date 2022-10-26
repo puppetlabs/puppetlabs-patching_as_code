@@ -30,4 +30,4 @@ then
 fi
 
 # flip result for correct exitcode (0 means reboot needed, 1 means no reboot needed)
-[[ $NEED_REBOOT -eq 1 ]]
+[ $NEED_REBOOT -eq 1 ]
