@@ -227,7 +227,7 @@ class patching_as_code (
   file { 'patching_configuration.json':
     ensure    => file,
     path      => "${facts['puppet_vardir']}/../../facter/facts.d/patching_configuration.json",
-    content   => to_json_pretty( {
+    content   => to_json_pretty( { # lint:ignore:manifest_whitespace_opening_brace_before
         patching_as_code_config => {
           allowlist                 => $allowlist,
           blocklist                 => $blocklist,
