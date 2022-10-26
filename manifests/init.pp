@@ -471,7 +471,7 @@ class patching_as_code (
                 ensure    => file,
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/last_run",
                 show_diff => false,
-                content   => Deferred('patching_as_code::last_run',[
+                content   => Deferred('patching_as_code::last_run', [
                     $updates_to_install.unique,
                     $choco_updates_to_install.unique,
                 ]),
@@ -490,7 +490,7 @@ class patching_as_code (
                 ensure    => file,
                 path      => "${facts['puppet_vardir']}/../../patching_as_code/high_prio_last_run",
                 show_diff => false,
-                content   => Deferred('patching_as_code::high_prio_last_run',[
+                content   => Deferred('patching_as_code::high_prio_last_run', [
                     $high_prio_updates_to_install.unique,
                     $high_prio_choco_updates_to_install.unique,
                 ]),
