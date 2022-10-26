@@ -38,7 +38,9 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'patching_as_code',
         'pending_reboot.ps1',
       )
-      pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}").chomp.to_s.casecmp('true').zero?
+      pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}", { failonfail: false })
+      puts pending_reboot
+      pending_reboot = pending_reboot.chomp.to_s.casecmp('true').zero?
     when 'linux'
       # get the script path relative to the Puppet Type
       checker_script = File.join(
