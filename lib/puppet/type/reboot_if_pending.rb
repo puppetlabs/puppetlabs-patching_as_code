@@ -39,7 +39,7 @@ Puppet::Type.newtype(:reboot_if_pending) do
         'pending_reboot.ps1',
       )
       pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}", { failonfail: false })
-      Puppet.send(pending_reboot.to_s)
+      Puppet.send('notice', pending_reboot.to_s)
       pending_reboot = Puppet::Util::Execution.execute("#{powershell} -ExecutionPolicy Unrestricted -File #{checker_script}")
     when 'linux'
       # get the script path relative to the Puppet Type
