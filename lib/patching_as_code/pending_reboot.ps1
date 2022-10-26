@@ -20,5 +20,5 @@ function Get-PendingReboot {
     # return result
     $rebootPending
 }
-Get-PendingReboot
+
 if (Get-PendingReboot) { exit 0 } else { exit 1 }
