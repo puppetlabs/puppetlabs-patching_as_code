@@ -2,12 +2,12 @@ function patching_as_code::is_patchday(
   Enum['Any','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] $day_of_week,
   Variant[Integer, Array] $week_iteration,
   String $patch_group
-){
+) {
   $srv_utc_time   = Timestamp()
   $node_offset    = $facts['patching_as_code_utc_offset'] ? {
-                      undef   => 0,
-                      default => $facts['patching_as_code_utc_offset'],
-                    }
+    undef   => 0,
+    default => $facts['patching_as_code_utc_offset'],
+  }
   $node_timestamp = $srv_utc_time + ($node_offset * 3600)
   $year           = $node_timestamp.strftime('%Y')
   $month          = $node_timestamp.strftime('%m')
@@ -53,5 +53,4 @@ function patching_as_code::is_patchday(
   } else {
     false
   }
-
 }
