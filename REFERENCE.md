@@ -7,15 +7,15 @@
 ### Classes
 
 * [`patching_as_code`](#patching_as_code): Framework for patch management as code. Works alongside the puppetlabs/pe_patch or albatrossflavour/os_patching modules
-* [`patching_as_code::high_prio_reboot`](#patching_as_codehigh_prio_reboot): Class: patching_as_code::high_prio_reboot
-* [`patching_as_code::linux::patchday`](#patching_as_codelinuxpatchday): Class: patching_as_code::linux::patchday Performs the actual patching on Linux
-* [`patching_as_code::reboot`](#patching_as_codereboot): Class: patching_as_code::reboot
-* [`patching_as_code::windows::patchday`](#patching_as_codewindowspatchday): Class: patching_as_code::windows::patchday Performs the actual patching on Windows
+* [`patching_as_code::high_prio_reboot`](#patching_as_codehigh_prio_reboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
+* [`patching_as_code::linux::patchday`](#patching_as_codelinuxpatchday): This class gets called by init.pp to perform the actual patching on Linux.
+* [`patching_as_code::reboot`](#patching_as_codereboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
+* [`patching_as_code::windows::patchday`](#patching_as_codewindowspatchday): This class gets called by init.pp to perform the actual patching on Windows.
 * [`patching_as_code::wu`](#patching_as_codewu): class patching_as_code::wu
 
 ### Defined types
 
-* [`patching_as_code::kb`](#patching_as_codekb): define patching_as_code::kb
+* [`patching_as_code::kb`](#patching_as_codekb): This define gets called by init.pp to install Windows KB patches.
 
 ### Resource types
 
@@ -82,15 +82,15 @@ The following parameters are available in the `patching_as_code` class:
 * [`post_patch_commands`](#post_patch_commands)
 * [`pre_reboot_commands`](#pre_reboot_commands)
 * [`fact_upload`](#fact_upload)
-* [`plan_patch_fact`](#plan_patch_fact)
 * [`enable_patching`](#enable_patching)
 * [`security_only`](#security_only)
 * [`high_priority_only`](#high_priority_only)
+* [`patch_choco`](#patch_choco)
 * [`use_pe_patch`](#use_pe_patch)
 * [`classify_pe_patch`](#classify_pe_patch)
 * [`patch_on_metered_links`](#patch_on_metered_links)
+* [`plan_patch_fact`](#plan_patch_fact)
 * [`patch_group`](#patch_group)
-* [`patch_choco`](#patch_choco)
 
 ##### <a name="Variant"></a>`Variant`
 
@@ -108,7 +108,7 @@ Hash of available patch_schedules. Default schedules are in /data/common.yaml of
 
 Options:
 
-* **:day_of_week** `String`: Day of the week to patch, valid options: 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+* **:day_of_week** `String`: Day of the week to patch, valid options: 'Any', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 * **:count_of_week** `Variant[Integer,Array[Integer]]`: Which week(s) in the month to patch, use number(s) between 1 and 5
 * **:hours** `String`: Which hours on patch day to patch, define a range as 'HH:MM - HH:MM'
 * **:max_runs** `String`: How many Puppet runs during the patch window can Puppet install patches. Must be at least 1.
@@ -199,10 +199,11 @@ Options:
 * **:command** `String`: The pre-reboot command to execute
 * **:path** `String`: The path for the command
 * **:provider** `String`: The provider for the command
+Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 
 ##### <a name="fact_upload"></a>`fact_upload`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 How os_patching/pe_patch handles changes to fact cache. Defaults to true.
 When true (default), `puppet fact upload` occurs as expected
@@ -210,37 +211,29 @@ When false, changes to fact cache are not uploaded
 
 Default value: ``true``
 
-##### <a name="plan_patch_fact"></a>`plan_patch_fact`
-
-Data type: `Optional[String]`
-
-Reserved parameter for running `patching_as_code` via a Plan (future functionality).
-
-Default value: ``undef``
-
 ##### <a name="enable_patching"></a>`enable_patching`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
-Controls if `patching_as_code` is allowed to install any updates.
+Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
 Can be used to disable patching with a single override.
 
 Default value: ``true``
 
 ##### <a name="security_only"></a>`security_only`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 Install only security updates. Requires latest version of Puppet Enterprise to work on Windows.
 When using `os_patching`, security updates can only be applied to Linux.
-If patching of Chocolatey packages is enabled, those packages will still update even if
+If patching of Chocolatey packages is enabled, Chocolatey packages will still update even if
 `security_only` is set to `true`.
 
 Default value: ``false``
 
 ##### <a name="high_priority_only"></a>`high_priority_only`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 Only allow updates from the `$high_priority_list` to be installed. Enabling this option will prevent
 regular patches from being installed, and will skip a pending reboot at the beginning of the patch
@@ -249,9 +242,17 @@ as long as the patch schedule set by `$high_priority_patch_group` allows reboots
 
 Default value: ``false``
 
+##### <a name="patch_choco"></a>`patch_choco`
+
+Data type: `Boolean`
+
+Also patch outdated Chocolatey packages (on Windows)
+
+Default value: ``false``
+
 ##### <a name="use_pe_patch"></a>`use_pe_patch`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 
@@ -259,7 +260,7 @@ Default value: ``true``
 
 ##### <a name="classify_pe_patch"></a>`classify_pe_patch`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 Controls if the pe_patch class (PE 2019.8+) is controlled by this module.
 When enabled, this module will classify the node with pe_patch,
@@ -272,7 +273,7 @@ Default value: ``false``
 
 ##### <a name="patch_on_metered_links"></a>`patch_on_metered_links`
 
-Data type: `Optional[Boolean]`
+Data type: `Boolean`
 
 Controls if patches are installed when the active network connection is a
 metered link. This setting only has affect for Windows operating systems.
@@ -281,19 +282,19 @@ When disabled (default), patches are not installed over a metered link.
 
 Default value: ``false``
 
+##### <a name="plan_patch_fact"></a>`plan_patch_fact`
+
+Data type: `Optional[String]`
+
+Reserved parameter for running `patching_as_code` via a Plan (future functionality).
+
+Default value: ``undef``
+
 ##### <a name="patch_group"></a>`patch_group`
 
 Data type: `Variant[String,Array[String]]`
 
 
-
-##### <a name="patch_choco"></a>`patch_choco`
-
-Data type: `Optional[Boolean]`
-
-
-
-Default value: ``false``
 
 ### <a name="patching_as_codehigh_prio_reboot"></a>`patching_as_code::high_prio_reboot`
 
@@ -310,7 +311,7 @@ The following parameters are available in the `patching_as_code::high_prio_reboo
 
 Data type: `Boolean`
 
-
+Only reboot the node if a system reboot is pending. This parameter is passed automatically from init.pp
 
 Default value: ``true``
 
@@ -318,14 +319,14 @@ Default value: ``true``
 
 Data type: `Integer`
 
-
+Time in seconds to delay the reboot by, defaults to 2 minutes.
+To override for patching, specify an alternate value by setting the patching_as_code::high_prio_reboot::reboot_delay parameter in Hiera.
 
 Default value: `120`
 
 ### <a name="patching_as_codelinuxpatchday"></a>`patching_as_code::linux::patchday`
 
 Class: patching_as_code::linux::patchday
-Performs the actual patching on Linux
 
 #### Parameters
 
@@ -340,13 +341,13 @@ The following parameters are available in the `patching_as_code::linux::patchday
 
 Data type: `Array`
 
-
+List of Linux packages to update.
 
 ##### <a name="choco_updates"></a>`choco_updates`
 
 Data type: `Array`
 
-
+List of Chocolatey packages to update, which should always be empty for Linux. This parameter exists only for compability.
 
 Default value: `[]`
 
@@ -354,7 +355,7 @@ Default value: `[]`
 
 Data type: `Array`
 
-
+List of high-priority Linux packages to update.
 
 Default value: `[]`
 
@@ -362,7 +363,7 @@ Default value: `[]`
 
 Data type: `Array`
 
-
+List of high-priority Chocolatey packages to update, which should always be empty for Linux. This parameter exists only for compability.
 
 Default value: `[]`
 
@@ -381,7 +382,7 @@ The following parameters are available in the `patching_as_code::reboot` class:
 
 Data type: `Boolean`
 
-
+Only reboot the node if a system reboot is pending. This parameter is passed automatically from init.pp
 
 Default value: ``true``
 
@@ -389,14 +390,14 @@ Default value: ``true``
 
 Data type: `Integer`
 
-
+Time in seconds to delay the reboot by, defaults to 2 minutes.
+To override for patching, specify an alternate value by setting the patching_as_code::reboot::reboot_delay parameter in Hiera.
 
 Default value: `120`
 
 ### <a name="patching_as_codewindowspatchday"></a>`patching_as_code::windows::patchday`
 
 Class: patching_as_code::windows::patchday
-Performs the actual patching on Windows
 
 #### Parameters
 
@@ -411,19 +412,19 @@ The following parameters are available in the `patching_as_code::windows::patchd
 
 Data type: `Array`
 
-
+List of Windows KB patches to install.
 
 ##### <a name="choco_updates"></a>`choco_updates`
 
 Data type: `Array`
 
-
+List of Chocolatey packages to update.
 
 ##### <a name="high_prio_updates"></a>`high_prio_updates`
 
 Data type: `Array`
 
-
+List of high-priority Windows KB patches to install.
 
 Default value: `[]`
 
@@ -431,7 +432,7 @@ Default value: `[]`
 
 Data type: `Array`
 
-
+List of high-priority Chocolatey packages to update.
 
 Default value: `[]`
 
@@ -455,25 +456,25 @@ The following parameters are available in the `patching_as_code::kb` defined typ
 
 ##### <a name="ensure"></a>`ensure`
 
-Data type: `Any`
+Data type: `String`
 
-
+When set to 'enabled' or 'present', will allow this resource to be applied. Removing updates is currently not supported.
 
 Default value: `'enabled'`
 
 ##### <a name="kb"></a>`kb`
 
-Data type: `Any`
+Data type: `String`
 
-
+Name of the KB patch to install.
 
 Default value: `$name`
 
 ##### <a name="maintwindow"></a>`maintwindow`
 
-Data type: `Any`
+Data type: `Optional[String]`
 
-
+Name of the patch window to use for installing the patch.
 
 Default value: ``undef``
 
