@@ -159,7 +159,7 @@ class patching_as_code (
   # Write local config file for unsafe processes
   file { "${facts['puppet_confdir']}/patching_unsafe_processes":
     ensure    => file,
-    content   => $unsafe_process_list.join('\n'),
+    content   => $unsafe_process_list.join("\n"),
     show_diff => false,
   }
 
