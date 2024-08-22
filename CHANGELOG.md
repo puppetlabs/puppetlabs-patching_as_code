@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
+## [v1.1.8](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.8) 92024-08-22)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.7...v1.1.8)
+
+## Fixed
+
+- Release 1.1.8: Powershell scripts should be executed with the -NoProfile parameter [\#96](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/96) ([elfranne](https://github.com/elfranne))
+
 ## [v1.1.7](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.7) (2022-11-01)
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.6...v1.1.7)
