@@ -20,7 +20,7 @@ jobs:
       with:
         apikey: ${{ env.HONEYCOMB_WRITEKEY }}
         dataset: ${{ env.HONEYCOMB_DATASET }}
-        job-status: ${{ job.status }}
+        status: ${{ job.status }}
 
     - name: "Honeycomb: start first step"
       run: |
@@ -28,7 +28,7 @@ jobs:
         echo STEP_START=$(date +%s) >> $GITHUB_ENV
     - name: "Checkout Source"
       if: ${{ github.repository_owner == 'puppetlabs' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
