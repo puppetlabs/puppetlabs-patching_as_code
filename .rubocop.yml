@@ -178,6 +178,8 @@ Lint/EmptyConditionalBody:
   Enabled: false
 Lint/EmptyFile:
   Enabled: false
+Lint/EmptyWhen:
+  Enabled: false
 Lint/ErbNewArguments:
   Enabled: false
 Lint/FloatComparison:

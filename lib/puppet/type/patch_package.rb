@@ -88,8 +88,8 @@ Puppet::Type.newtype(:patch_package) do
 
   def retrieve_resource_reference(res)
     case res
-    when Puppet::Type      # rubocop:disable Lint/EmptyWhen
-    when Puppet::Resource  # rubocop:disable Lint/EmptyWhen
+    when Puppet::Type
+    when Puppet::Resource
     when String
       begin
         Puppet::Resource.new(res)
