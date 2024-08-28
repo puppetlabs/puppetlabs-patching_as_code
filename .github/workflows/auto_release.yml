@@ -16,7 +16,7 @@ jobs:
     steps:
     
     - name: "Honeycomb: Start recording"
-      uses: puppetlabs/kvrhdn-gha-buildevents@pdk-templates-v1
+      uses: honeycombio/gha-buildevents@v3
       with:
         apikey: ${{ env.HONEYCOMB_WRITEKEY }}
         dataset: ${{ env.HONEYCOMB_DATASET }}
