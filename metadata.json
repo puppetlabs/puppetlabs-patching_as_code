@@ -27,26 +27,37 @@
   ],
   "operatingsystem_support": [
     {
+      "operatingsystem": "Alma Linux",
+      "operatingsystemrelease": [
+        "8",
+        "9"
+      ]
+    },
+    {
       "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-        "6",
-        "7",
-        "8"
+        "7"
       ]
     },
     {
       "operatingsystem": "OracleLinux",
       "operatingsystemrelease": [
-        "6",
         "7",
-        "8"
+        "8",
+        "9"
       ]
     },
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-        "6",
         "7",
+        "8",
+        "9"
+      ]
+    },
+    {
+      "operatingsystem": "Rocky Linux",
+      "operatingsystemrelease": [
         "8",
         "9"
       ]
@@ -54,26 +65,23 @@
     {
       "operatingsystem": "Scientific",
       "operatingsystemrelease": [
-        "6",
-        "7",
-        "8"
+        "7"
       ]
     },
     {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-        "7",
-        "8",
-        "9",
-        "10"
+        "10",
+        "11",
+        "12"
       ]
     },
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "16.04",
         "18.04",
-        "20.04"
+        "20.04",
+        "22.04"
       ]
     },
     {
@@ -99,7 +107,7 @@
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 6.0.0 < 8.0.0"
+      "version_requirement": ">= 6.0.0 < 9.0.0"
     }
   ],
   "pdk-version": "3.2.0",
