@@ -7,15 +7,15 @@
 ### Classes
 
 * [`patching_as_code`](#patching_as_code): Framework for patch management as code. Works alongside the puppetlabs/pe_patch or albatrossflavour/os_patching modules
-* [`patching_as_code::high_prio_reboot`](#patching_as_codehigh_prio_reboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
-* [`patching_as_code::linux::patchday`](#patching_as_codelinuxpatchday): This class gets called by init.pp to perform the actual patching on Linux.
-* [`patching_as_code::reboot`](#patching_as_codereboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
-* [`patching_as_code::windows::patchday`](#patching_as_codewindowspatchday): This class gets called by init.pp to perform the actual patching on Windows.
-* [`patching_as_code::wu`](#patching_as_codewu): class patching_as_code::wu
+* [`patching_as_code::high_prio_reboot`](#patching_as_code--high_prio_reboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
+* [`patching_as_code::linux::patchday`](#patching_as_code--linux--patchday): This class gets called by init.pp to perform the actual patching on Linux.
+* [`patching_as_code::reboot`](#patching_as_code--reboot): This class gets called by init.pp to reboot the node. You can use Hiera to set a different default for the reboot_delay if desired.
+* [`patching_as_code::windows::patchday`](#patching_as_code--windows--patchday): This class gets called by init.pp to perform the actual patching on Windows.
+* [`patching_as_code::wu`](#patching_as_code--wu): class patching_as_code::wu
 
 ### Defined types
 
-* [`patching_as_code::kb`](#patching_as_codekb): This define gets called by init.pp to install Windows KB patches.
+* [`patching_as_code::kb`](#patching_as_code--kb): This define gets called by init.pp to install Windows KB patches.
 
 ### Resource types
 
@@ -24,11 +24,11 @@
 
 ### Functions
 
-* [`patching_as_code::dedupe_arch`](#patching_as_codededupe_arch)
-* [`patching_as_code::high_prio_last_run`](#patching_as_codehigh_prio_last_run)
-* [`patching_as_code::is_patchday`](#patching_as_codeis_patchday)
-* [`patching_as_code::last_run`](#patching_as_codelast_run)
-* [`patching_as_code::process_patch_groups`](#patching_as_codeprocess_patch_groups)
+* [`patching_as_code::dedupe_arch`](#patching_as_code--dedupe_arch)
+* [`patching_as_code::high_prio_last_run`](#patching_as_code--high_prio_last_run)
+* [`patching_as_code::is_patchday`](#patching_as_code--is_patchday)
+* [`patching_as_code::last_run`](#patching_as_code--last_run)
+* [`patching_as_code::process_patch_groups`](#patching_as_code--process_patch_groups)
 
 ### Tasks
 
@@ -68,31 +68,31 @@ class {'patching_as_code':
 
 The following parameters are available in the `patching_as_code` class:
 
-* [`Variant`](#Variant)
-* [`patch_schedule`](#patch_schedule)
-* [`blocklist`](#blocklist)
-* [`allowlist`](#allowlist)
-* [`blocklist_choco`](#blocklist_choco)
-* [`allowlist_choco`](#allowlist_choco)
-* [`high_priority_patch_group`](#high_priority_patch_group)
-* [`high_priority_list`](#high_priority_list)
-* [`high_priority_list_choco`](#high_priority_list_choco)
-* [`unsafe_process_list`](#unsafe_process_list)
-* [`pre_patch_commands`](#pre_patch_commands)
-* [`post_patch_commands`](#post_patch_commands)
-* [`pre_reboot_commands`](#pre_reboot_commands)
-* [`fact_upload`](#fact_upload)
-* [`enable_patching`](#enable_patching)
-* [`security_only`](#security_only)
-* [`high_priority_only`](#high_priority_only)
-* [`patch_choco`](#patch_choco)
-* [`use_pe_patch`](#use_pe_patch)
-* [`classify_pe_patch`](#classify_pe_patch)
-* [`patch_on_metered_links`](#patch_on_metered_links)
-* [`plan_patch_fact`](#plan_patch_fact)
-* [`patch_group`](#patch_group)
+* [`Variant`](#-patching_as_code--Variant)
+* [`patch_schedule`](#-patching_as_code--patch_schedule)
+* [`blocklist`](#-patching_as_code--blocklist)
+* [`allowlist`](#-patching_as_code--allowlist)
+* [`blocklist_choco`](#-patching_as_code--blocklist_choco)
+* [`allowlist_choco`](#-patching_as_code--allowlist_choco)
+* [`high_priority_patch_group`](#-patching_as_code--high_priority_patch_group)
+* [`high_priority_list`](#-patching_as_code--high_priority_list)
+* [`high_priority_list_choco`](#-patching_as_code--high_priority_list_choco)
+* [`unsafe_process_list`](#-patching_as_code--unsafe_process_list)
+* [`pre_patch_commands`](#-patching_as_code--pre_patch_commands)
+* [`post_patch_commands`](#-patching_as_code--post_patch_commands)
+* [`pre_reboot_commands`](#-patching_as_code--pre_reboot_commands)
+* [`fact_upload`](#-patching_as_code--fact_upload)
+* [`enable_patching`](#-patching_as_code--enable_patching)
+* [`security_only`](#-patching_as_code--security_only)
+* [`high_priority_only`](#-patching_as_code--high_priority_only)
+* [`patch_choco`](#-patching_as_code--patch_choco)
+* [`use_pe_patch`](#-patching_as_code--use_pe_patch)
+* [`classify_pe_patch`](#-patching_as_code--classify_pe_patch)
+* [`patch_on_metered_links`](#-patching_as_code--patch_on_metered_links)
+* [`plan_patch_fact`](#-patching_as_code--plan_patch_fact)
+* [`patch_group`](#-patching_as_code--patch_group)
 
-##### <a name="Variant"></a>`Variant`
+##### <a name="-patching_as_code--Variant"></a>`Variant`
 
 Data type: `String, Array[String]`
 
@@ -100,7 +100,7 @@ patch_group
 Name(s) of the patch_group(s) for this node. Must match one or more of the patch groups in $patch_schedule
 To assign multiple patch groups, provide this parameter as an array
 
-##### <a name="patch_schedule"></a>`patch_schedule`
+##### <a name="-patching_as_code--patch_schedule"></a>`patch_schedule`
 
 Data type: `Hash`
 
@@ -114,57 +114,57 @@ Options:
 * **:max_runs** `String`: How many Puppet runs during the patch window can Puppet install patches. Must be at least 1.
 * **:reboot** `String`: Reboot behavior, valid options: 'always', 'never', 'ifneeded'
 
-##### <a name="blocklist"></a>`blocklist`
+##### <a name="-patching_as_code--blocklist"></a>`blocklist`
 
 Data type: `Array`
 
 List of updates to block from installing
 
-##### <a name="allowlist"></a>`allowlist`
+##### <a name="-patching_as_code--allowlist"></a>`allowlist`
 
 Data type: `Array`
 
 List of updates that are allowed to be installed. Any updates not on this list get blocked.
 
-##### <a name="blocklist_choco"></a>`blocklist_choco`
+##### <a name="-patching_as_code--blocklist_choco"></a>`blocklist_choco`
 
 Data type: `Array`
 
 List of Chocolatey updates to block from installing
 
-##### <a name="allowlist_choco"></a>`allowlist_choco`
+##### <a name="-patching_as_code--allowlist_choco"></a>`allowlist_choco`
 
 Data type: `Array`
 
 List of Chocolatey updates that are allowed to be installed. Any Chocolatey updates not on this list get blocked.
 
-##### <a name="high_priority_patch_group"></a>`high_priority_patch_group`
+##### <a name="-patching_as_code--high_priority_patch_group"></a>`high_priority_patch_group`
 
 Data type: `String`
 
 Name of the high_priority_patch_group for this node. Must match a patch group in `$patch_schedule`
 This patch schedule will only be used for patches in the `$high_priority_list`.
 
-##### <a name="high_priority_list"></a>`high_priority_list`
+##### <a name="-patching_as_code--high_priority_list"></a>`high_priority_list`
 
 Data type: `Array`
 
 List of updates to install on the patch schedule set by `$high_priority_patch_group`.
 
-##### <a name="high_priority_list_choco"></a>`high_priority_list_choco`
+##### <a name="-patching_as_code--high_priority_list_choco"></a>`high_priority_list_choco`
 
 Data type: `Array`
 
 List of Chocolatey updates to install on the patch schedule set by `$high_priority_patch_group`.
 
-##### <a name="unsafe_process_list"></a>`unsafe_process_list`
+##### <a name="-patching_as_code--unsafe_process_list"></a>`unsafe_process_list`
 
 Data type: `Array`
 
 List of processes that will cause patching to be skipped if any of the processes in the list are active on the system.
 Prepend an entry with `{full}` to match against the full process arguments.
 
-##### <a name="pre_patch_commands"></a>`pre_patch_commands`
+##### <a name="-patching_as_code--pre_patch_commands"></a>`pre_patch_commands`
 
 Data type: `Hash`
 
@@ -176,7 +176,7 @@ Options:
 * **:path** `String`: The path for the command
 * **:provider** `String`: The provider for the command
 
-##### <a name="post_patch_commands"></a>`post_patch_commands`
+##### <a name="-patching_as_code--post_patch_commands"></a>`post_patch_commands`
 
 Data type: `Hash`
 
@@ -188,7 +188,7 @@ Options:
 * **:path** `String`: The path for the command
 * **:provider** `String`: The provider for the command
 
-##### <a name="pre_reboot_commands"></a>`pre_reboot_commands`
+##### <a name="-patching_as_code--pre_reboot_commands"></a>`pre_reboot_commands`
 
 Data type: `Hash`
 
@@ -201,7 +201,7 @@ Options:
 * **:provider** `String`: The provider for the command
 Note: the provider for the command gets forced to `posix` on Linux and `powershell` on Windows
 
-##### <a name="fact_upload"></a>`fact_upload`
+##### <a name="-patching_as_code--fact_upload"></a>`fact_upload`
 
 Data type: `Boolean`
 
@@ -209,18 +209,18 @@ How os_patching/pe_patch handles changes to fact cache. Defaults to true.
 When true (default), `puppet fact upload` occurs as expected
 When false, changes to fact cache are not uploaded
 
-Default value: ``true``
+Default value: `true`
 
-##### <a name="enable_patching"></a>`enable_patching`
+##### <a name="-patching_as_code--enable_patching"></a>`enable_patching`
 
 Data type: `Boolean`
 
 Controls if `patching_as_code` is allowed to install any updates. Can be used to disable patching with a single override.
 Can be used to disable patching with a single override.
 
-Default value: ``true``
+Default value: `true`
 
-##### <a name="security_only"></a>`security_only`
+##### <a name="-patching_as_code--security_only"></a>`security_only`
 
 Data type: `Boolean`
 
@@ -229,9 +229,9 @@ When using `os_patching`, security updates can only be applied to Linux.
 If patching of Chocolatey packages is enabled, Chocolatey packages will still update even if
 `security_only` is set to `true`.
 
-Default value: ``false``
+Default value: `false`
 
-##### <a name="high_priority_only"></a>`high_priority_only`
+##### <a name="-patching_as_code--high_priority_only"></a>`high_priority_only`
 
 Data type: `Boolean`
 
@@ -240,25 +240,25 @@ regular patches from being installed, and will skip a pending reboot at the begi
 run if a pending reboot is detected. A pending reboot may still happen at the end of the patch run,
 as long as the patch schedule set by `$high_priority_patch_group` allows reboots to occur.
 
-Default value: ``false``
+Default value: `false`
 
-##### <a name="patch_choco"></a>`patch_choco`
+##### <a name="-patching_as_code--patch_choco"></a>`patch_choco`
 
 Data type: `Boolean`
 
 Also patch outdated Chocolatey packages (on Windows)
 
-Default value: ``false``
+Default value: `false`
 
-##### <a name="use_pe_patch"></a>`use_pe_patch`
+##### <a name="-patching_as_code--use_pe_patch"></a>`use_pe_patch`
 
 Data type: `Boolean`
 
 Use the pe_patch module if available (PE 2019.8+). Defaults to true.
 
-Default value: ``true``
+Default value: `true`
 
-##### <a name="classify_pe_patch"></a>`classify_pe_patch`
+##### <a name="-patching_as_code--classify_pe_patch"></a>`classify_pe_patch`
 
 Data type: `Boolean`
 
@@ -269,9 +269,9 @@ When disabled (default), you can use PE's own "PE Patch Management" groups
 to classify nodes with pe_patch. In that case, please make sure you match
 the patch_group variable in pe_patch with the patch_group in patching_as_code
 
-Default value: ``false``
+Default value: `false`
 
-##### <a name="patch_on_metered_links"></a>`patch_on_metered_links`
+##### <a name="-patching_as_code--patch_on_metered_links"></a>`patch_on_metered_links`
 
 Data type: `Boolean`
 
@@ -280,23 +280,23 @@ metered link. This setting only has affect for Windows operating systems.
 When enabled, patching are installed even over a metered link.
 When disabled (default), patches are not installed over a metered link.
 
-Default value: ``false``
+Default value: `false`
 
-##### <a name="plan_patch_fact"></a>`plan_patch_fact`
+##### <a name="-patching_as_code--plan_patch_fact"></a>`plan_patch_fact`
 
 Data type: `Optional[String]`
 
 Reserved parameter for running `patching_as_code` via a Plan (future functionality).
 
-Default value: ``undef``
+Default value: `undef`
 
-##### <a name="patch_group"></a>`patch_group`
+##### <a name="-patching_as_code--patch_group"></a>`patch_group`
 
 Data type: `Variant[String,Array[String]]`
 
 
 
-### <a name="patching_as_codehigh_prio_reboot"></a>`patching_as_code::high_prio_reboot`
+### <a name="patching_as_code--high_prio_reboot"></a>`patching_as_code::high_prio_reboot`
 
 Class: patching_as_code::high_prio_reboot
 
@@ -304,18 +304,18 @@ Class: patching_as_code::high_prio_reboot
 
 The following parameters are available in the `patching_as_code::high_prio_reboot` class:
 
-* [`reboot_if_needed`](#reboot_if_needed)
-* [`reboot_delay`](#reboot_delay)
+* [`reboot_if_needed`](#-patching_as_code--high_prio_reboot--reboot_if_needed)
+* [`reboot_delay`](#-patching_as_code--high_prio_reboot--reboot_delay)
 
-##### <a name="reboot_if_needed"></a>`reboot_if_needed`
+##### <a name="-patching_as_code--high_prio_reboot--reboot_if_needed"></a>`reboot_if_needed`
 
 Data type: `Boolean`
 
 Only reboot the node if a system reboot is pending. This parameter is passed automatically from init.pp
 
-Default value: ``true``
+Default value: `true`
 
-##### <a name="reboot_delay"></a>`reboot_delay`
+##### <a name="-patching_as_code--high_prio_reboot--reboot_delay"></a>`reboot_delay`
 
 Data type: `Integer`
 
@@ -324,7 +324,7 @@ To override for patching, specify an alternate value by setting the patching_as_
 
 Default value: `120`
 
-### <a name="patching_as_codelinuxpatchday"></a>`patching_as_code::linux::patchday`
+### <a name="patching_as_code--linux--patchday"></a>`patching_as_code::linux::patchday`
 
 Class: patching_as_code::linux::patchday
 
@@ -332,18 +332,18 @@ Class: patching_as_code::linux::patchday
 
 The following parameters are available in the `patching_as_code::linux::patchday` class:
 
-* [`updates`](#updates)
-* [`choco_updates`](#choco_updates)
-* [`high_prio_updates`](#high_prio_updates)
-* [`high_prio_choco_updates`](#high_prio_choco_updates)
+* [`updates`](#-patching_as_code--linux--patchday--updates)
+* [`choco_updates`](#-patching_as_code--linux--patchday--choco_updates)
+* [`high_prio_updates`](#-patching_as_code--linux--patchday--high_prio_updates)
+* [`high_prio_choco_updates`](#-patching_as_code--linux--patchday--high_prio_choco_updates)
 
-##### <a name="updates"></a>`updates`
+##### <a name="-patching_as_code--linux--patchday--updates"></a>`updates`
 
 Data type: `Array`
 
 List of Linux packages to update.
 
-##### <a name="choco_updates"></a>`choco_updates`
+##### <a name="-patching_as_code--linux--patchday--choco_updates"></a>`choco_updates`
 
 Data type: `Array`
 
@@ -351,7 +351,7 @@ List of Chocolatey packages to update, which should always be empty for Linux. T
 
 Default value: `[]`
 
-##### <a name="high_prio_updates"></a>`high_prio_updates`
+##### <a name="-patching_as_code--linux--patchday--high_prio_updates"></a>`high_prio_updates`
 
 Data type: `Array`
 
@@ -359,7 +359,7 @@ List of high-priority Linux packages to update.
 
 Default value: `[]`
 
-##### <a name="high_prio_choco_updates"></a>`high_prio_choco_updates`
+##### <a name="-patching_as_code--linux--patchday--high_prio_choco_updates"></a>`high_prio_choco_updates`
 
 Data type: `Array`
 
@@ -367,7 +367,7 @@ List of high-priority Chocolatey packages to update, which should always be empt
 
 Default value: `[]`
 
-### <a name="patching_as_codereboot"></a>`patching_as_code::reboot`
+### <a name="patching_as_code--reboot"></a>`patching_as_code::reboot`
 
 Class: patching_as_code::reboot
 
@@ -375,18 +375,18 @@ Class: patching_as_code::reboot
 
 The following parameters are available in the `patching_as_code::reboot` class:
 
-* [`reboot_if_needed`](#reboot_if_needed)
-* [`reboot_delay`](#reboot_delay)
+* [`reboot_if_needed`](#-patching_as_code--reboot--reboot_if_needed)
+* [`reboot_delay`](#-patching_as_code--reboot--reboot_delay)
 
-##### <a name="reboot_if_needed"></a>`reboot_if_needed`
+##### <a name="-patching_as_code--reboot--reboot_if_needed"></a>`reboot_if_needed`
 
 Data type: `Boolean`
 
 Only reboot the node if a system reboot is pending. This parameter is passed automatically from init.pp
 
-Default value: ``true``
+Default value: `true`
 
-##### <a name="reboot_delay"></a>`reboot_delay`
+##### <a name="-patching_as_code--reboot--reboot_delay"></a>`reboot_delay`
 
 Data type: `Integer`
 
@@ -395,7 +395,7 @@ To override for patching, specify an alternate value by setting the patching_as_
 
 Default value: `120`
 
-### <a name="patching_as_codewindowspatchday"></a>`patching_as_code::windows::patchday`
+### <a name="patching_as_code--windows--patchday"></a>`patching_as_code::windows::patchday`
 
 Class: patching_as_code::windows::patchday
 
@@ -403,24 +403,24 @@ Class: patching_as_code::windows::patchday
 
 The following parameters are available in the `patching_as_code::windows::patchday` class:
 
-* [`updates`](#updates)
-* [`choco_updates`](#choco_updates)
-* [`high_prio_updates`](#high_prio_updates)
-* [`high_prio_choco_updates`](#high_prio_choco_updates)
+* [`updates`](#-patching_as_code--windows--patchday--updates)
+* [`choco_updates`](#-patching_as_code--windows--patchday--choco_updates)
+* [`high_prio_updates`](#-patching_as_code--windows--patchday--high_prio_updates)
+* [`high_prio_choco_updates`](#-patching_as_code--windows--patchday--high_prio_choco_updates)
 
-##### <a name="updates"></a>`updates`
+##### <a name="-patching_as_code--windows--patchday--updates"></a>`updates`
 
 Data type: `Array`
 
 List of Windows KB patches to install.
 
-##### <a name="choco_updates"></a>`choco_updates`
+##### <a name="-patching_as_code--windows--patchday--choco_updates"></a>`choco_updates`
 
 Data type: `Array`
 
 List of Chocolatey packages to update.
 
-##### <a name="high_prio_updates"></a>`high_prio_updates`
+##### <a name="-patching_as_code--windows--patchday--high_prio_updates"></a>`high_prio_updates`
 
 Data type: `Array`
 
@@ -428,7 +428,7 @@ List of high-priority Windows KB patches to install.
 
 Default value: `[]`
 
-##### <a name="high_prio_choco_updates"></a>`high_prio_choco_updates`
+##### <a name="-patching_as_code--windows--patchday--high_prio_choco_updates"></a>`high_prio_choco_updates`
 
 Data type: `Array`
 
@@ -436,13 +436,13 @@ List of high-priority Chocolatey packages to update.
 
 Default value: `[]`
 
-### <a name="patching_as_codewu"></a>`patching_as_code::wu`
+### <a name="patching_as_code--wu"></a>`patching_as_code::wu`
 
 class patching_as_code::wu
 
 ## Defined types
 
-### <a name="patching_as_codekb"></a>`patching_as_code::kb`
+### <a name="patching_as_code--kb"></a>`patching_as_code::kb`
 
 define patching_as_code::kb
 
@@ -450,11 +450,11 @@ define patching_as_code::kb
 
 The following parameters are available in the `patching_as_code::kb` defined type:
 
-* [`ensure`](#ensure)
-* [`kb`](#kb)
-* [`maintwindow`](#maintwindow)
+* [`ensure`](#-patching_as_code--kb--ensure)
+* [`kb`](#-patching_as_code--kb--kb)
+* [`maintwindow`](#-patching_as_code--kb--maintwindow)
 
-##### <a name="ensure"></a>`ensure`
+##### <a name="-patching_as_code--kb--ensure"></a>`ensure`
 
 Data type: `String`
 
@@ -462,7 +462,7 @@ When set to 'enabled' or 'present', will allow this resource to be applied. Remo
 
 Default value: `'enabled'`
 
-##### <a name="kb"></a>`kb`
+##### <a name="-patching_as_code--kb--kb"></a>`kb`
 
 Data type: `String`
 
@@ -470,13 +470,13 @@ Name of the KB patch to install.
 
 Default value: `$name`
 
-##### <a name="maintwindow"></a>`maintwindow`
+##### <a name="-patching_as_code--kb--maintwindow"></a>`maintwindow`
 
 Data type: `Optional[String]`
 
 Name of the patch window to use for installing the patch.
 
-Default value: ``undef``
+Default value: `undef`
 
 ## Resource types
 
@@ -488,21 +488,21 @@ Define a package resource to patch
 
 The following parameters are available in the `patch_package` type.
 
-* [`chocolatey`](#chocolatey)
-* [`name`](#name)
-* [`patch_window`](#patch_window)
+* [`chocolatey`](#-patch_package--chocolatey)
+* [`name`](#-patch_package--name)
+* [`patch_window`](#-patch_package--patch_window)
 
-##### <a name="chocolatey"></a>`chocolatey`
+##### <a name="-patch_package--chocolatey"></a>`chocolatey`
 
 Whether this is a Chocolatey package (Windows only)
 
-##### <a name="name"></a>`name`
+##### <a name="-patch_package--name"></a>`name`
 
 namevar
 
 Name of the package to patch
 
-##### <a name="patch_window"></a>`patch_window`
+##### <a name="-patch_package--patch_window"></a>`patch_window`
 
 Puppet schedule to link package resource to
 
@@ -514,27 +514,27 @@ Perform a clean reboot if it was pending before this agent run
 
 The following parameters are available in the `reboot_if_pending` type.
 
-* [`name`](#name)
-* [`os`](#os)
-* [`patch_window`](#patch_window)
+* [`name`](#-reboot_if_pending--name)
+* [`os`](#-reboot_if_pending--os)
+* [`patch_window`](#-reboot_if_pending--patch_window)
 
-##### <a name="name"></a>`name`
+##### <a name="-reboot_if_pending--name"></a>`name`
 
 namevar
 
 Name of this resource (has no function)
 
-##### <a name="os"></a>`os`
+##### <a name="-reboot_if_pending--os"></a>`os`
 
 OS type from kernel fact
 
-##### <a name="patch_window"></a>`patch_window`
+##### <a name="-reboot_if_pending--patch_window"></a>`patch_window`
 
 Puppet schedule to link the reboot resource to
 
 ## Functions
 
-### <a name="patching_as_codededupe_arch"></a>`patching_as_code::dedupe_arch`
+### <a name="patching_as_code--dedupe_arch"></a>`patching_as_code::dedupe_arch`
 
 Type: Ruby 4.x API
 
@@ -552,7 +552,7 @@ Data type: `Array`
 
 
 
-### <a name="patching_as_codehigh_prio_last_run"></a>`patching_as_code::high_prio_last_run`
+### <a name="patching_as_code--high_prio_last_run"></a>`patching_as_code::high_prio_last_run`
 
 Type: Ruby 4.x API
 
@@ -576,7 +576,7 @@ Data type: `Array`
 
 
 
-### <a name="patching_as_codeis_patchday"></a>`patching_as_code::is_patchday`
+### <a name="patching_as_code--is_patchday"></a>`patching_as_code::is_patchday`
 
 Type: Puppet Language
 
@@ -606,7 +606,7 @@ Data type: `String`
 
 
 
-### <a name="patching_as_codelast_run"></a>`patching_as_code::last_run`
+### <a name="patching_as_code--last_run"></a>`patching_as_code::last_run`
 
 Type: Ruby 4.x API
 
@@ -630,7 +630,7 @@ Data type: `Array`
 
 
 
-### <a name="patching_as_codeprocess_patch_groups"></a>`patching_as_code::process_patch_groups`
+### <a name="patching_as_code--process_patch_groups"></a>`patching_as_code::process_patch_groups`
 
 Type: Puppet Language
 
