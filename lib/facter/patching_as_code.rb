@@ -1,7 +1,7 @@
 Facter.add('patching_as_code') do
   confine kernel: 'windows'
   confine kernel: 'linux'
-  
+
   setcode do
     directory      = "#{Facter.value(:puppet_vardir)}/../../patching_as_code"
     file           = "#{directory}/last_run"

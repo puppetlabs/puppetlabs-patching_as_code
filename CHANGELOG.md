@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
+## [v1.1.9](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.9) (2024-08-27)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.7...v1.1.9)
+
+### Fixed
+
+- Fix unsafe process list [\#89](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/89) ([kreeuwijk](https://github.com/kreeuwijk))
+
+### UNCATEGORIZED PRS; LABEL THEM ON GITHUB
+
+-  Powershell scripts should be executed with the -NoProfile parameter [\#96](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/96) ([elfranne](https://github.com/elfranne))
+- Exclude 'patching\_as\_code' fact from running on Darwin systems [\#93](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/93) ([kennyb-222](https://github.com/kennyb-222))
+- Pdk release prep fix fix [\#92](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/92) ([kreeuwijk](https://github.com/kreeuwijk))
+- fix PDK Release Prep action step [\#91](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/91) ([kreeuwijk](https://github.com/kreeuwijk))
+- remove travis [\#87](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/87) ([binford2k](https://github.com/binford2k))
+
 ## [v1.1.7](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.7) (2022-11-01)
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.6...v1.1.7)
