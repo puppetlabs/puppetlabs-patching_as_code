@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - fix PDK Release Prep action step [#91](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/91) ([kreeuwijk](https://github.com/kreeuwijk))
 - remove travis [#87](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/87) ([binford2k](https://github.com/binford2k))
 
-## [v1.1.7](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.7) (2022-11-01)
+## [v1.1.7](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.7) - 2022-11-01
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.6...v1.1.7)
 
@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 - Release 1.1.7: More robust reboot check and update docs [#79](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/79) ([kreeuwijk](https://github.com/kreeuwijk))
 
-## [v1.1.6](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.6) (2022-09-28)
+## [v1.1.6](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v1.1.6) - 2022-09-28
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.5...v1.1.6)
 
