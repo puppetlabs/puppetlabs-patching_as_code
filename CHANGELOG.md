@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Other
 
+- fix dates [#104](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/104) ([spotter-puppet](https://github.com/spotter-puppet))
 - V2.0.0 [#103](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/103) ([spotter-puppet](https://github.com/spotter-puppet))
 - V1.1.8 [#100](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/100) ([spotter-puppet](https://github.com/spotter-puppet))
 
