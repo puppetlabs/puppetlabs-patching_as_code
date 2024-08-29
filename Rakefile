@@ -5,6 +5,5 @@ require 'puppet_litmus/rake_tasks' if Gem.loaded_specs.key? 'puppet_litmus'
 require 'puppetlabs_spec_helper/rake_tasks'
 require 'puppet-syntax/tasks/puppet-syntax'
 require 'puppet-strings/tasks' if Gem.loaded_specs.key? 'puppet-strings'
-require 'github_changelog_generator/task'
 
 PuppetLint.configuration.send('disable_relative')
