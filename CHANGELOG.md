@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
+## [v2.0.1](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v2.0.1) - 2025-02-07
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v2.0.0...v2.0.1)
+
+### Other
+
+- logic error and wrong kernel fact result [#110](https://github.com/puppetlabs/puppetlabs-patching_as_code/pull/110) ([spotter-puppet](https://github.com/spotter-puppet))
+
 ## [v2.0.0](https://github.com/puppetlabs/puppetlabs-patching_as_code/tree/v2.0.0) - 2024-08-29
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-patching_as_code/compare/v1.1.9...v2.0.0)
