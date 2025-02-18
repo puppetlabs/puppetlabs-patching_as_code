@@ -21,6 +21,10 @@
       "version_requirement": ">= 4.0.0 < 6.0.0"
     },
     {
+      "name": "puppet/extlib",
+      "version_requirement": ">= 7.5.0 < 8.0.0"
+    },
+    {
       "name": "puppetlabs/reboot",
       "version_requirement": ">= 2.4.0 < 6.0.0"
     }

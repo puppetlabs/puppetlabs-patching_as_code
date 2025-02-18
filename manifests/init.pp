@@ -151,13 +151,18 @@ class patching_as_code (
     fail("High Priority Patch group ${high_priority_patch_group} is not valid as no associated schedule was found!\nEnsure the patching_as_code::patch_schedule parameter contains a schedule for this patch group.") #lint:ignore:140chars
   }
 
-  # Verify the puppet_confdir from the puppetlabs/puppet_agent module is present
-  unless $facts['puppet_confdir'] {
-    fail('The puppetlabs/patching_as_code module depends on the puppetlabs/puppet_agent module, please add it to your setup!')
+  # Verify the puppet_confdir is present
+  if len($facts['puppet_confdir']) > 0 {
+    $puppet_confdir = $facts['puppet_confdir']
+  } elsif len($facts['extlib__puppet_config']['confdir']) > 0 {
+    $puppet_confdir = $facts['extlib__puppet_config']['confdir']
+  }
+  } else {
+    fail('The puppetlabs/patching_as_code module depends on the puppetlabs/puppet_agent module or puppet/extlib, please add one to your setup!')
   }
 
   # Write local config file for unsafe processes
-  file { "${facts['puppet_confdir']}/patching_unsafe_processes":
+  file { "${puppet_confdir}/patching_unsafe_processes":
     ensure    => file,
     content   => $unsafe_process_list.join("\n"),
     show_diff => false,
